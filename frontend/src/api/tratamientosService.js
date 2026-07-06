@@ -96,10 +96,10 @@ const normalizeTratamiento = (tratamiento) => {
       tratamiento?.titulo ??
       "Tratamiento sin nombre",
 
-    descripcion:
+    descripcionPlan:
+      tratamiento?.descripcion_plan ??
       tratamiento?.descripcion ??
       tratamiento?.detalle ??
-      tratamiento?.acciones ??
       "",
 
     organizacionId:
@@ -116,19 +116,13 @@ const normalizeTratamiento = (tratamiento) => {
           "Sin organización"
       ),
 
-    analisisId:
-      getObjectId(analisis) ??
-      tratamiento?.analisis_id ??
+    escenarioId:
+      tratamiento?.escenario ??
+      tratamiento?.escenario_id ??
       null,
 
-    analisisNombre:
-      getObjectName(
-        analisis,
-        ["nombre", "nombre_analisis", "titulo"],
-        tratamiento?.analisis_nombre ??
-          tratamiento?.nombre_analisis ??
-          "Sin análisis"
-      ),
+    escenarioCodigo:
+      tratamiento?.escenario_codigo ?? "",
 
     estrategia:
       tratamiento?.estrategia ??
@@ -233,34 +227,20 @@ const normalizeOrganizacion = (organizacion) => ({
     "Organización sin nombre",
 });
 
-const normalizeAnalisis = (analisis) => ({
-  id:
-    analisis?.id ??
-    analisis?.analisis_id ??
-    analisis?.pk,
-
-  nombre:
-    analisis?.nombre ??
-    analisis?.nombre_analisis ??
-    "Análisis FAIR",
-
-  organizacionId:
-    getObjectId(analisis?.organizacion) ??
-    analisis?.organizacion_id ??
-    null,
-
-  perdidaAnualEsperada: numericValue(
-    analisis?.perdida_anual_esperada,
-    analisis?.ale,
-    analisis?.riesgo_anual,
-    0
-  ),
-
-  nivelRiesgo:
-    analisis?.nivel_riesgo ??
-    analisis?.clasificacion_riesgo ??
-    "",
-});
+// Backend AnalisisRiesgo: id, escenario (FK int), escenario_codigo, probabilidad, impacto, lef_probable, plm_probable, slm_probable
+const normalizeAnalisis = (analisis) => {
+  const lefProbable = numericValue(analisis?.lef_probable);
+  const plmProbable = numericValue(analisis?.plm_probable);
+  const slmProbable = numericValue(analisis?.slm_probable);
+  return {
+    id: analisis?.id ?? analisis?.pk ?? null,
+    nombre: analisis?.escenario_codigo ?? `Análisis #${analisis?.id ?? ""}`,
+    escenarioId: analisis?.escenario ?? null,
+    organizacionId: null,
+    perdidaAnualEsperada: lefProbable * (plmProbable + slmProbable),
+    nivelRiesgo: analisis?.nivel_riesgo_simple ?? "",
+  };
+};
 
 const getErrorMessage = (error) => {
   if (!error.response) {

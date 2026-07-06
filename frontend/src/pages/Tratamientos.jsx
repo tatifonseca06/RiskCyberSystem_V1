@@ -1210,10 +1210,7 @@ const Tratamientos = () => {
         open={formOpen}
         onClose={handleCloseForm}
         onSubmit={handleSave}
-        tratamiento={
-          selectedTratamiento
-        }
-        organizaciones={organizaciones}
+        tratamiento={selectedTratamiento}
         analisis={analisis}
         loading={saving}
       />
