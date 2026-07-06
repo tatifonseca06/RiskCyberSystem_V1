@@ -170,9 +170,6 @@ const Amenazas = () => {
   const [organizaciones, setOrganizaciones] =
     useState([]);
 
-  const [activos, setActivos] =
-    useState([]);
-
   const [total, setTotal] = useState(0);
 
   const [page, setPage] = useState(0);
@@ -249,19 +246,8 @@ const Amenazas = () => {
       setLoadingCatalogs(true);
 
       try {
-        const [
-          organizacionesData,
-          activosData,
-        ] = await Promise.all([
-          amenazasService.getOrganizaciones(),
-          amenazasService.getActivos(),
-        ]);
-
-        setOrganizaciones(
-          organizacionesData
-        );
-
-        setActivos(activosData);
+        const organizacionesData = await amenazasService.getOrganizaciones();
+        setOrganizaciones(organizacionesData);
       } catch (requestError) {
         setError(
           requestError.message ||
@@ -793,186 +779,83 @@ const Amenazas = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>
-                        Amenaza
-                      </TableCell>
-
-                      <TableCell>
-                        Organización
-                      </TableCell>
-
-                      <TableCell>
-                        Activo
-                      </TableCell>
-
-                      <TableCell>
-                        Categoría
-                      </TableCell>
-
-                      <TableCell>
-                        Origen
-                      </TableCell>
-
-                      <TableCell>
-                        Probabilidad
-                      </TableCell>
-
-                      <TableCell>
-                        Impacto
-                      </TableCell>
-
-                      <TableCell align="right">
-                        Frecuencia anual
-                      </TableCell>
-
-                      <TableCell>
-                        Estado
-                      </TableCell>
-
-                      <TableCell align="right">
-                        Acciones
-                      </TableCell>
+                      <TableCell>Amenaza</TableCell>
+                      <TableCell>Organización</TableCell>
+                      <TableCell>Origen</TableCell>
+                      <TableCell>Tipo</TableCell>
+                      <TableCell align="right">Acciones</TableCell>
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
-                    {amenazas.map(
-                      (amenaza) => (
-                        <TableRow
-                          key={amenaza.id}
-                          hover
-                        >
-                          <TableCell>
+                    {amenazas.map((amenaza) => (
+                      <TableRow key={amenaza.id} hover>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={700}>
+                            {amenaza.nombre}
+                          </Typography>
+                          {amenaza.descripcion && (
                             <Typography
-                              variant="body2"
-                              fontWeight={700}
-                            >
-                              {amenaza.nombre}
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{
+                                display: "block",
+                                maxWidth: 280,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}>
+                              {amenaza.descripcion}
                             </Typography>
+                          )}
+                        </TableCell>
 
-                            {amenaza.descripcion && (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{
-                                  display: "block",
-                                  maxWidth: 240,
-                                  overflow:
-                                    "hidden",
-                                  textOverflow:
-                                    "ellipsis",
-                                  whiteSpace:
-                                    "nowrap",
-                                }}
-                              >
-                                {
-                                  amenaza.descripcion
-                                }
-                              </Typography>
-                            )}
-                          </TableCell>
+                        <TableCell>
+                          {amenaza.organizacionNombre}
+                        </TableCell>
 
-                          <TableCell>
-                            {
-                              amenaza.organizacionNombre
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={amenaza.origenLabel || amenaza.origen || "Sin origen"}
+                            color={
+                              amenaza.origen === "EXTERNA"
+                                ? "error"
+                                : amenaza.origen === "INTERNA"
+                                ? "warning"
+                                : "info"
                             }
-                          </TableCell>
+                            variant="outlined"
+                          />
+                        </TableCell>
 
-                          <TableCell>
-                            {amenaza.activoNombre}
-                          </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={amenaza.es_generica ? "Genérica" : "Específica"}
+                            color={amenaza.es_generica ? "default" : "primary"}
+                            variant="outlined"
+                          />
+                        </TableCell>
 
-                          <TableCell>
-                            {amenaza.categoria ||
-                              "Sin categoría"}
-                          </TableCell>
-
-                          <TableCell>
-                            {amenaza.origen ||
-                              "Sin origen"}
-                          </TableCell>
-
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              label={
-                                amenaza.probabilidad ||
-                                "Sin definir"
-                              }
-                              color={getProbabilityColor(
-                                amenaza.probabilidad
-                              )}
-                              variant="outlined"
-                            />
-                          </TableCell>
-
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              label={
-                                amenaza.impacto ||
-                                "Sin definir"
-                              }
-                              color={getImpactColor(
-                                amenaza.impacto
-                              )}
-                              variant="outlined"
-                            />
-                          </TableCell>
-
-                          <TableCell align="right">
-                            {formatFrequency(
-                              amenaza.frecuenciaAnual
-                            )}
-                          </TableCell>
-
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              label={
-                                amenaza.estado
-                                  ? "Activa"
-                                  : "Inactiva"
-                              }
-                              color={
-                                amenaza.estado
-                                  ? "success"
-                                  : "default"
-                              }
-                              variant="outlined"
-                            />
-                          </TableCell>
-
-                          <TableCell align="right">
-                            <Tooltip title="Editar">
-                              <IconButton
-                                color="primary"
-                                onClick={() =>
-                                  handleEdit(
-                                    amenaza
-                                  )
-                                }
-                              >
-                                <Edit />
-                              </IconButton>
-                            </Tooltip>
-
-                            <Tooltip title="Eliminar">
-                              <IconButton
-                                color="error"
-                                onClick={() =>
-                                  handleDelete(
-                                    amenaza
-                                  )
-                                }
-                              >
-                                <Delete />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    )}
+                        <TableCell align="right">
+                          <Tooltip title="Editar">
+                            <IconButton
+                              color="primary"
+                              onClick={() => handleEdit(amenaza)}>
+                              <Edit />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Eliminar">
+                            <IconButton
+                              color="error"
+                              onClick={() => handleDelete(amenaza)}>
+                              <Delete />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -1026,7 +909,6 @@ const Amenazas = () => {
         onSubmit={handleSave}
         amenaza={selectedAmenaza}
         organizaciones={organizaciones}
-        activos={activos}
         loading={saving}
       />
 

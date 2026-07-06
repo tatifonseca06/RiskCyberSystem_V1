@@ -172,9 +172,6 @@ const Vulnerabilidades = () => {
   const [organizaciones, setOrganizaciones] =
     useState([]);
 
-  const [activos, setActivos] =
-    useState([]);
-
   const [total, setTotal] = useState(0);
 
   const [page, setPage] = useState(0);
@@ -251,19 +248,8 @@ const Vulnerabilidades = () => {
       setLoadingCatalogs(true);
 
       try {
-        const [
-          organizacionesData,
-          activosData,
-        ] = await Promise.all([
-          vulnerabilidadesService.getOrganizaciones(),
-          vulnerabilidadesService.getActivos(),
-        ]);
-
-        setOrganizaciones(
-          organizacionesData
-        );
-
-        setActivos(activosData);
+        const organizacionesData = await vulnerabilidadesService.getOrganizaciones();
+        setOrganizaciones(organizacionesData);
       } catch (requestError) {
         setError(
           requestError.message ||
@@ -828,197 +814,85 @@ const Vulnerabilidades = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>
-                        Vulnerabilidad
-                      </TableCell>
-
-                      <TableCell>
-                        Organización
-                      </TableCell>
-
-                      <TableCell>
-                        Activo
-                      </TableCell>
-
-                      <TableCell>
-                        CVE
-                      </TableCell>
-
-                      <TableCell>
-                        CVSS
-                      </TableCell>
-
-                      <TableCell>
-                        Severidad
-                      </TableCell>
-
-                      <TableCell>
-                        Remediación
-                      </TableCell>
-
-                      <TableCell>
-                        Detección
-                      </TableCell>
-
-                      <TableCell align="right">
-                        Acciones
-                      </TableCell>
+                      <TableCell>Vulnerabilidad</TableCell>
+                      <TableCell>Organización</TableCell>
+                      <TableCell>Categoría</TableCell>
+                      <TableCell>Tipo</TableCell>
+                      <TableCell align="right">Acciones</TableCell>
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
-                    {vulnerabilidades.map(
-                      (vulnerabilidad) => (
-                        <TableRow
-                          key={vulnerabilidad.id}
-                          hover
-                        >
-                          <TableCell>
+                    {vulnerabilidades.map((vulnerabilidad) => (
+                      <TableRow key={vulnerabilidad.id} hover>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={700}>
+                            {vulnerabilidad.nombre}
+                          </Typography>
+                          {vulnerabilidad.descripcion && (
                             <Typography
-                              variant="body2"
-                              fontWeight={700}
-                            >
-                              {
-                                vulnerabilidad.nombre
-                              }
-                            </Typography>
-
-                            {vulnerabilidad.responsable && (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                display="block"
-                              >
-                                Responsable:{" "}
-                                {
-                                  vulnerabilidad.responsable
-                                }
-                              </Typography>
-                            )}
-                          </TableCell>
-
-                          <TableCell>
-                            {
-                              vulnerabilidad.organizacionNombre
-                            }
-                          </TableCell>
-
-                          <TableCell>
-                            {
-                              vulnerabilidad.activoNombre
-                            }
-                          </TableCell>
-
-                          <TableCell>
-                            <Typography
-                              variant="body2"
+                              variant="caption"
+                              color="text.secondary"
                               sx={{
-                                fontFamily:
-                                  "monospace",
-                              }}
-                            >
-                              {vulnerabilidad.cve ||
-                                "Sin CVE"}
+                                display: "block",
+                                maxWidth: 280,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}>
+                              {vulnerabilidad.descripcion}
                             </Typography>
-                          </TableCell>
+                          )}
+                        </TableCell>
 
-                          <TableCell>
-                            <Box
-                              sx={{
-                                minWidth: 90,
-                              }}
-                            >
-                              <Typography
-                                variant="body2"
-                                fontWeight={800}
-                              >
-                                {Number(
-                                  vulnerabilidad.cvss ||
-                                    0
-                                ).toFixed(1)}
-                              </Typography>
+                        <TableCell>
+                          {vulnerabilidad.organizacionNombre}
+                        </TableCell>
 
-                              <LinearProgress
-                                variant="determinate"
-                                value={
-                                  Number(
-                                    vulnerabilidad.cvss ||
-                                      0
-                                  ) * 10
-                                }
-                                color={getCvssColor(
-                                  vulnerabilidad.cvss
-                                )}
-                                sx={{
-                                  mt: 0.5,
-                                  height: 6,
-                                  borderRadius: 10,
-                                }}
-                              />
-                            </Box>
-                          </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={vulnerabilidad.categoriaLabel || vulnerabilidad.categoria || "Sin categoría"}
+                            color={
+                              vulnerabilidad.categoria === "TECNOLOGICA"
+                                ? "error"
+                                : vulnerabilidad.categoria === "ORGANIZACIONAL"
+                                ? "warning"
+                                : vulnerabilidad.categoria === "TERCEROS"
+                                ? "info"
+                                : "default"
+                            }
+                            variant="outlined"
+                          />
+                        </TableCell>
 
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              label={
-                                vulnerabilidad.severidad
-                              }
-                              color={getSeverityColor(
-                                vulnerabilidad.severidad
-                              )}
-                              variant="outlined"
-                            />
-                          </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={vulnerabilidad.es_generica ? "Genérica" : "Específica"}
+                            color={vulnerabilidad.es_generica ? "default" : "primary"}
+                            variant="outlined"
+                          />
+                        </TableCell>
 
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              label={
-                                vulnerabilidad.estadoRemediacion
-                              }
-                              color={getRemediationColor(
-                                vulnerabilidad.estadoRemediacion
-                              )}
-                            />
-                          </TableCell>
-
-                          <TableCell>
-                            {formatDate(
-                              vulnerabilidad.fechaDeteccion
-                            )}
-                          </TableCell>
-
-                          <TableCell align="right">
-                            <Tooltip title="Editar">
-                              <IconButton
-                                color="primary"
-                                onClick={() =>
-                                  handleEdit(
-                                    vulnerabilidad
-                                  )
-                                }
-                              >
-                                <Edit />
-                              </IconButton>
-                            </Tooltip>
-
-                            <Tooltip title="Eliminar">
-                              <IconButton
-                                color="error"
-                                onClick={() =>
-                                  handleDelete(
-                                    vulnerabilidad
-                                  )
-                                }
-                              >
-                                <Delete />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    )}
+                        <TableCell align="right">
+                          <Tooltip title="Editar">
+                            <IconButton
+                              color="primary"
+                              onClick={() => handleEdit(vulnerabilidad)}>
+                              <Edit />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Eliminar">
+                            <IconButton
+                              color="error"
+                              onClick={() => handleDelete(vulnerabilidad)}>
+                              <Delete />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -1070,11 +944,8 @@ const Vulnerabilidades = () => {
         open={formOpen}
         onClose={handleCloseForm}
         onSubmit={handleSave}
-        vulnerabilidad={
-          selectedVulnerabilidad
-        }
+        vulnerabilidad={selectedVulnerabilidad}
         organizaciones={organizaciones}
-        activos={activos}
         loading={saving}
       />
 

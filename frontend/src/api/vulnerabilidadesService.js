@@ -40,126 +40,37 @@ const extractResults = (data) => {
   };
 };
 
+// Backend model: CatalogoVulnerabilidad
+// Fields: id, organizacion (int FK), organizacion_nombre, nombre, categoria (TECNOLOGICA|ORGANIZACIONAL|PROCESOS|TERCEROS), descripcion, es_generica
+const CATEGORIA_LABELS = {
+  TECNOLOGICA: "Tecnológica",
+  ORGANIZACIONAL: "Organizacional",
+  PROCESOS: "De procesos",
+  TERCEROS: "De terceros",
+};
+
 const normalizeVulnerabilidad = (vulnerabilidad) => {
-  const organizacionObject =
-    vulnerabilidad?.organizacion &&
-    typeof vulnerabilidad.organizacion === "object"
-      ? vulnerabilidad.organizacion
-      : null;
-
-  const activoObject =
-    vulnerabilidad?.activo &&
-    typeof vulnerabilidad.activo === "object"
-      ? vulnerabilidad.activo
-      : null;
-
   return {
     ...vulnerabilidad,
 
-    id:
-      vulnerabilidad?.id ??
-      vulnerabilidad?.vulnerabilidad_id ??
-      vulnerabilidad?.pk ??
-      null,
+    id: vulnerabilidad?.id ?? vulnerabilidad?.pk ?? null,
 
-    nombre:
-      vulnerabilidad?.nombre ??
-      vulnerabilidad?.nombre_vulnerabilidad ??
-      vulnerabilidad?.titulo ??
-      "Sin nombre",
+    nombre: vulnerabilidad?.nombre ?? "Sin nombre",
 
-    descripcion:
-      vulnerabilidad?.descripcion ??
-      vulnerabilidad?.detalle ??
-      "",
+    descripcion: vulnerabilidad?.descripcion ?? "",
 
-    cve:
-      vulnerabilidad?.cve ??
-      vulnerabilidad?.codigo_cve ??
-      vulnerabilidad?.identificador ??
-      "",
+    categoria: vulnerabilidad?.categoria ?? "",
 
-    cvss: Number(
-      vulnerabilidad?.cvss ??
-        vulnerabilidad?.puntaje_cvss ??
-        vulnerabilidad?.score_cvss ??
-        0
-    ),
+    categoriaLabel: CATEGORIA_LABELS[vulnerabilidad?.categoria] ?? vulnerabilidad?.categoria ?? "Sin categoría",
 
-    severidad:
-      vulnerabilidad?.severidad ??
-      vulnerabilidad?.nivel_severidad ??
-      vulnerabilidad?.severity ??
-      "Media",
+    es_generica: Boolean(vulnerabilidad?.es_generica ?? false),
 
-    estadoRemediacion:
-      vulnerabilidad?.estado_remediacion ??
-      vulnerabilidad?.estadoRemediacion ??
-      vulnerabilidad?.estado ??
-      vulnerabilidad?.status ??
-      "Pendiente",
-
-    organizacionId:
-      organizacionObject?.id ??
-      vulnerabilidad?.organizacion_id ??
-      (
-        typeof vulnerabilidad?.organizacion !== "object"
-          ? vulnerabilidad?.organizacion
-          : null
-      ) ??
-      null,
+    organizacionId: vulnerabilidad?.organizacion ?? vulnerabilidad?.organizacion_id ?? null,
 
     organizacionNombre:
-      organizacionObject?.nombre ??
       vulnerabilidad?.organizacion_nombre ??
       vulnerabilidad?.nombre_organizacion ??
       "Sin organización",
-
-    activoId:
-      activoObject?.id ??
-      vulnerabilidad?.activo_id ??
-      (
-        typeof vulnerabilidad?.activo !== "object"
-          ? vulnerabilidad?.activo
-          : null
-      ) ??
-      null,
-
-    activoNombre:
-      activoObject?.nombre ??
-      vulnerabilidad?.activo_nombre ??
-      vulnerabilidad?.nombre_activo ??
-      "Sin activo",
-
-    responsable:
-      vulnerabilidad?.responsable ??
-      vulnerabilidad?.propietario ??
-      vulnerabilidad?.asignado_a ??
-      "",
-
-    fechaDeteccion:
-      vulnerabilidad?.fecha_deteccion ??
-      vulnerabilidad?.fechaDeteccion ??
-      vulnerabilidad?.detected_at ??
-      null,
-
-    fechaRemediacion:
-      vulnerabilidad?.fecha_remediacion ??
-      vulnerabilidad?.fechaRemediacion ??
-      vulnerabilidad?.remediated_at ??
-      null,
-
-    recomendacion:
-      vulnerabilidad?.recomendacion ??
-      vulnerabilidad?.solucion ??
-      vulnerabilidad?.remediacion ??
-      "",
-
-    activa:
-      vulnerabilidad?.activa ??
-      vulnerabilidad?.habilitado ??
-      vulnerabilidad?.activo_estado ??
-      true,
   };
 };
 

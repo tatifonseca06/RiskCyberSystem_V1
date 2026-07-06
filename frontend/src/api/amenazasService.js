@@ -40,115 +40,36 @@ const extractResults = (data) => {
   };
 };
 
+// Backend model: CatalogoAmenaza
+// Fields: id, organizacion (int FK), organizacion_nombre, nombre, origen (EXTERNA|INTERNA|PROCESO), descripcion, es_generica
+const ORIGEN_LABELS = {
+  EXTERNA: "Amenaza externa",
+  INTERNA: "Amenaza interna",
+  PROCESO: "Amenaza de proceso y entorno",
+};
+
 const normalizeAmenaza = (amenaza) => {
-  const organizacionObject =
-    amenaza?.organizacion &&
-    typeof amenaza.organizacion === "object"
-      ? amenaza.organizacion
-      : null;
-
-  const activoObject =
-    amenaza?.activo &&
-    typeof amenaza.activo === "object"
-      ? amenaza.activo
-      : null;
-
   return {
     ...amenaza,
 
-    id:
-      amenaza?.id ??
-      amenaza?.amenaza_id ??
-      amenaza?.pk ??
-      null,
+    id: amenaza?.id ?? amenaza?.pk ?? null,
 
-    nombre:
-      amenaza?.nombre ??
-      amenaza?.nombre_amenaza ??
-      amenaza?.titulo ??
-      "Sin nombre",
+    nombre: amenaza?.nombre ?? "Sin nombre",
 
-    descripcion:
-      amenaza?.descripcion ??
-      amenaza?.detalle ??
-      "",
+    descripcion: amenaza?.descripcion ?? "",
 
-    categoria:
-      amenaza?.categoria ??
-      amenaza?.tipo ??
-      amenaza?.tipo_amenaza ??
-      "",
+    origen: amenaza?.origen ?? "",
 
-    origen:
-      amenaza?.origen ??
-      amenaza?.fuente ??
-      amenaza?.source ??
-      "",
+    origenLabel: ORIGEN_LABELS[amenaza?.origen] ?? amenaza?.origen ?? "Sin origen",
 
-    probabilidad:
-      amenaza?.probabilidad ??
-      amenaza?.nivel_probabilidad ??
-      amenaza?.likelihood ??
-      "Media",
+    es_generica: Boolean(amenaza?.es_generica ?? false),
 
-    frecuenciaAnual:
-      Number(
-        amenaza?.frecuencia_anual ??
-          amenaza?.frecuencia ??
-          amenaza?.tasa_anual ??
-          amenaza?.annual_frequency ??
-          0
-      ),
-
-    impacto:
-      amenaza?.impacto ??
-      amenaza?.nivel_impacto ??
-      amenaza?.impact ??
-      "Medio",
-
-    organizacionId:
-      organizacionObject?.id ??
-      amenaza?.organizacion_id ??
-      (
-        typeof amenaza?.organizacion !== "object"
-          ? amenaza?.organizacion
-          : null
-      ) ??
-      null,
+    organizacionId: amenaza?.organizacion ?? amenaza?.organizacion_id ?? null,
 
     organizacionNombre:
-      organizacionObject?.nombre ??
       amenaza?.organizacion_nombre ??
       amenaza?.nombre_organizacion ??
       "Sin organización",
-
-    activoId:
-      activoObject?.id ??
-      amenaza?.activo_id ??
-      (
-        typeof amenaza?.activo !== "object"
-          ? amenaza?.activo
-          : null
-      ) ??
-      null,
-
-    activoNombre:
-      activoObject?.nombre ??
-      amenaza?.activo_nombre ??
-      amenaza?.nombre_activo ??
-      "Todos los activos",
-
-    estado:
-      amenaza?.estado ??
-      amenaza?.activo_estado ??
-      amenaza?.habilitado ??
-      true,
-
-    fechaCreacion:
-      amenaza?.fecha_creacion ??
-      amenaza?.created_at ??
-      amenaza?.createdAt ??
-      null,
   };
 };
 

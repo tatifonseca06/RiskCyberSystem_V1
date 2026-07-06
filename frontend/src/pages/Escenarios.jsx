@@ -869,199 +869,64 @@ const Escenarios = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>
-                        Escenario
-                      </TableCell>
-
-                      <TableCell>
-                        Organización
-                      </TableCell>
-
-                      <TableCell>
-                        Activo
-                      </TableCell>
-
-                      <TableCell>
-                        Amenaza
-                      </TableCell>
-
-                      <TableCell>
-                        Vulnerabilidad
-                      </TableCell>
-
-                      <TableCell>
-                        Frecuencia
-                      </TableCell>
-
-                      <TableCell>
-                        Impacto
-                      </TableCell>
-
-                      <TableCell>
-                        Riesgo
-                      </TableCell>
-
-                      <TableCell>
-                        Estado
-                      </TableCell>
-
-                      <TableCell align="right">
-                        Acciones
-                      </TableCell>
+                      <TableCell>Código</TableCell>
+                      <TableCell>Organización</TableCell>
+                      <TableCell>Activo</TableCell>
+                      <TableCell>Amenaza</TableCell>
+                      <TableCell>Vulnerabilidad</TableCell>
+                      <TableCell>Descripción del resultado</TableCell>
+                      <TableCell align="right">Acciones</TableCell>
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
-                    {escenarios.map(
-                      (escenario) => {
-                        const riskLevel =
-                          escenario.nivelRiesgo ||
-                          calculateRiskLevel(
-                            escenario.frecuencia,
-                            escenario.impacto
-                          );
+                    {escenarios.map((escenario) => (
+                      <TableRow key={escenario.id} hover>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={700} fontFamily="monospace">
+                            {escenario.codigo || `#${escenario.id}`}
+                          </Typography>
+                        </TableCell>
 
-                        return (
-                          <TableRow
-                            key={escenario.id}
-                            hover
-                          >
-                            <TableCell>
-                              <Typography
-                                variant="body2"
-                                fontWeight={700}
-                              >
-                                {escenario.nombre}
-                              </Typography>
+                        <TableCell>{escenario.organizacionNombre}</TableCell>
+                        <TableCell>{escenario.activoNombre}</TableCell>
+                        <TableCell>{escenario.amenazaNombre}</TableCell>
+                        <TableCell>{escenario.vulnerabilidadNombre}</TableCell>
 
-                              {escenario.descripcion && (
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{
-                                    display: "block",
-                                    maxWidth: 240,
-                                    overflow:
-                                      "hidden",
-                                    textOverflow:
-                                      "ellipsis",
-                                    whiteSpace:
-                                      "nowrap",
-                                  }}
-                                >
-                                  {
-                                    escenario.descripcion
-                                  }
-                                </Typography>
-                              )}
-                            </TableCell>
+                        <TableCell>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              display: "block",
+                              maxWidth: 240,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}>
+                            {escenario.descripcionResultado || escenario.descripcion_resultado || "—"}
+                          </Typography>
+                        </TableCell>
 
-                            <TableCell>
-                              {
-                                escenario.organizacionNombre
-                              }
-                            </TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="Editar">
+                            <IconButton
+                              color="primary"
+                              onClick={() => handleEdit(escenario)}>
+                              <Edit />
+                            </IconButton>
+                          </Tooltip>
 
-                            <TableCell>
-                              {
-                                escenario.activoNombre
-                              }
-                            </TableCell>
-
-                            <TableCell>
-                              {
-                                escenario.amenazaNombre
-                              }
-                            </TableCell>
-
-                            <TableCell>
-                              {
-                                escenario.vulnerabilidadNombre
-                              }
-                            </TableCell>
-
-                            <TableCell>
-                              {Number(
-                                escenario.frecuencia ||
-                                  0
-                              ).toLocaleString(
-                                "es-EC",
-                                {
-                                  maximumFractionDigits: 2,
-                                }
-                              )}
-                            </TableCell>
-
-                            <TableCell>
-                              {Number(
-                                escenario.impacto ||
-                                  0
-                              ).toLocaleString(
-                                "es-EC",
-                                {
-                                  maximumFractionDigits: 2,
-                                }
-                              )}
-                            </TableCell>
-
-                            <TableCell>
-                              <Chip
-                                size="small"
-                                label={riskLevel}
-                                color={getRiskColor(
-                                  riskLevel
-                                )}
-                                sx={{
-                                  fontWeight: 700,
-                                }}
-                              />
-                            </TableCell>
-
-                            <TableCell>
-                              <Chip
-                                size="small"
-                                label={
-                                  escenario.estado ||
-                                  "Identificado"
-                                }
-                                color={getStatusColor(
-                                  escenario.estado
-                                )}
-                                variant="outlined"
-                              />
-                            </TableCell>
-
-                            <TableCell align="right">
-                              <Tooltip title="Editar">
-                                <IconButton
-                                  color="primary"
-                                  onClick={() =>
-                                    handleEdit(
-                                      escenario
-                                    )
-                                  }
-                                >
-                                  <Edit />
-                                </IconButton>
-                              </Tooltip>
-
-                              <Tooltip title="Eliminar">
-                                <IconButton
-                                  color="error"
-                                  onClick={() =>
-                                    handleDelete(
-                                      escenario
-                                    )
-                                  }
-                                >
-                                  <Delete />
-                                </IconButton>
-                              </Tooltip>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
-                    )}
+                          <Tooltip title="Eliminar">
+                            <IconButton
+                              color="error"
+                              onClick={() => handleDelete(escenario)}>
+                              <Delete />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>

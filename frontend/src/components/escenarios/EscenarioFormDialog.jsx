@@ -2,105 +2,30 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
-  FormControlLabel,
   FormHelperText,
   Grid,
-  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
-  Slider,
   Stack,
-  Switch,
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const INITIAL_FORM = {
-  nombre: "",
-  descripcion: "",
   organizacion: "",
+  codigo: "",
   activo: "",
   amenaza: "",
   vulnerabilidad: "",
-  frecuencia: 3,
-  impacto: 3,
-  probabilidad: "Media",
-  estado: "Identificado",
-  activoEstado: true,
-};
-
-const PROBABILIDADES = [
-  "Muy baja",
-  "Baja",
-  "Media",
-  "Alta",
-  "Muy alta",
-];
-
-const ESTADOS = [
-  "Identificado",
-  "En análisis",
-  "Evaluado",
-  "En tratamiento",
-  "Aceptado",
-  "Cerrado",
-];
-
-const SCALE_MARKS = [
-  { value: 1, label: "1" },
-  { value: 2, label: "2" },
-  { value: 3, label: "3" },
-  { value: 4, label: "4" },
-  { value: 5, label: "5" },
-];
-
-const getRiskScore = (frequency, impact) => {
-  return Number(frequency || 0) * Number(impact || 0);
-};
-
-const getRiskLevel = (score) => {
-  if (score >= 20) {
-    return "Crítico";
-  }
-
-  if (score >= 12) {
-    return "Alto";
-  }
-
-  if (score >= 6) {
-    return "Medio";
-  }
-
-  return "Bajo";
-};
-
-const getRiskColor = (level) => {
-  if (level === "Crítico") {
-    return "error";
-  }
-
-  if (level === "Alto") {
-    return "warning";
-  }
-
-  if (level === "Medio") {
-    return "info";
-  }
-
-  return "success";
+  descripcion_resultado: "",
 };
 
 const EscenarioFormDialog = ({
@@ -114,79 +39,23 @@ const EscenarioFormDialog = ({
   vulnerabilidades,
   loading,
 }) => {
-  const [formData, setFormData] =
-    useState(INITIAL_FORM);
-
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] =
-    useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const isEditing = Boolean(escenario?.id);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
 
     if (escenario) {
       setFormData({
-        nombre:
-          escenario.nombre ??
-          escenario.nombre_escenario ??
-          "",
-
-        descripcion:
-          escenario.descripcion ??
-          escenario.evento_riesgo ??
-          "",
-
-        organizacion:
-          escenario.organizacionId ??
-          escenario.organizacion_id ??
-          "",
-
-        activo:
-          escenario.activoId ??
-          escenario.activo_id ??
-          "",
-
-        amenaza:
-          escenario.amenazaId ??
-          escenario.amenaza_id ??
-          "",
-
-        vulnerabilidad:
-          escenario.vulnerabilidadId ??
-          escenario.vulnerabilidad_id ??
-          "",
-
-        frecuencia:
-          Number(
-            escenario.frecuencia ??
-              escenario.frecuencia_anual ??
-              3
-          ),
-
-        impacto:
-          Number(
-            escenario.impacto ??
-              escenario.impacto_estimado ??
-              3
-          ),
-
-        probabilidad:
-          escenario.probabilidad ??
-          escenario.nivel_probabilidad ??
-          "Media",
-
-        estado:
-          escenario.estado ??
-          "Identificado",
-
-        activoEstado:
-          escenario.activoEstado ??
-          escenario.activo_estado ??
-          true,
+        organizacion: escenario.organizacionId ?? escenario.organizacion ?? "",
+        codigo: escenario.codigo ?? "",
+        activo: escenario.activoId ?? escenario.activo ?? "",
+        amenaza: escenario.amenazaId ?? escenario.amenaza ?? "",
+        vulnerabilidad: escenario.vulnerabilidadId ?? escenario.vulnerabilidad ?? "",
+        descripcion_resultado: escenario.descripcionResultado ?? escenario.descripcion_resultado ?? "",
       });
     } else {
       setFormData(INITIAL_FORM);
@@ -196,97 +65,32 @@ const EscenarioFormDialog = ({
     setSubmitError("");
   }, [open, escenario]);
 
-  const filteredAssets = useMemo(() => {
-    if (!formData.organizacion) {
-      return activos;
-    }
-
-    return activos.filter((activo) => {
-      if (!activo.organizacionId) {
-        return true;
-      }
-
-      return (
-        String(activo.organizacionId) ===
-        String(formData.organizacion)
-      );
-    });
+  const filteredActivos = useMemo(() => {
+    if (!formData.organizacion) return activos;
+    return activos.filter(
+      (a) => !a.organizacionId || String(a.organizacionId) === String(formData.organizacion)
+    );
   }, [activos, formData.organizacion]);
 
-  const filteredThreats = useMemo(() => {
-    return amenazas.filter((amenaza) => {
-      const organizationMatches =
-        !formData.organizacion ||
-        !amenaza.organizacionId ||
-        String(amenaza.organizacionId) ===
-          String(formData.organizacion);
+  const filteredAmenazas = useMemo(() => {
+    if (!formData.organizacion) return amenazas;
+    return amenazas.filter(
+      (a) => !a.organizacionId || String(a.organizacionId) === String(formData.organizacion)
+    );
+  }, [amenazas, formData.organizacion]);
 
-      const assetMatches =
-        !formData.activo ||
-        !amenaza.activoId ||
-        String(amenaza.activoId) ===
-          String(formData.activo);
-
-      return organizationMatches && assetMatches;
-    });
-  }, [
-    amenazas,
-    formData.organizacion,
-    formData.activo,
-  ]);
-
-  const filteredVulnerabilities = useMemo(() => {
+  const filteredVulnerabilidades = useMemo(() => {
+    if (!formData.organizacion) return vulnerabilidades;
     return vulnerabilidades.filter(
-      (vulnerabilidad) => {
-        const organizationMatches =
-          !formData.organizacion ||
-          !vulnerabilidad.organizacionId ||
-          String(
-            vulnerabilidad.organizacionId
-          ) === String(formData.organizacion);
-
-        const assetMatches =
-          !formData.activo ||
-          !vulnerabilidad.activoId ||
-          String(vulnerabilidad.activoId) ===
-            String(formData.activo);
-
-        return organizationMatches && assetMatches;
-      }
+      (v) => !v.organizacionId || String(v.organizacionId) === String(formData.organizacion)
     );
-  }, [
-    vulnerabilidades,
-    formData.organizacion,
-    formData.activo,
-  ]);
-
-  const riskScore = useMemo(() => {
-    return getRiskScore(
-      formData.frecuencia,
-      formData.impacto
-    );
-  }, [formData.frecuencia, formData.impacto]);
-
-  const riskLevel = useMemo(() => {
-    return getRiskLevel(riskScore);
-  }, [riskScore]);
+  }, [vulnerabilidades, formData.organizacion]);
 
   const handleChange = (event) => {
-    const {
-      name,
-      value,
-      checked,
-      type,
-    } = event.target;
+    const { name, value } = event.target;
 
-    setFormData((previous) => {
-      const updated = {
-        ...previous,
-        [name]:
-          type === "checkbox"
-            ? checked
-            : value,
-      };
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
 
       if (name === "organizacion") {
         updated.activo = "";
@@ -294,230 +98,155 @@ const EscenarioFormDialog = ({
         updated.vulnerabilidad = "";
       }
 
-      if (name === "activo") {
-        updated.amenaza = "";
-        updated.vulnerabilidad = "";
-      }
-
       return updated;
     });
 
-    setErrors((previous) => ({
-      ...previous,
-      [name]: "",
-    }));
-
+    setErrors((prev) => ({ ...prev, [name]: "" }));
     setSubmitError("");
-  };
-
-  const handleSliderChange = (field) => (
-    event,
-    value
-  ) => {
-    setFormData((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
   };
 
   const validate = () => {
     const newErrors = {};
 
-    if (!formData.nombre.trim()) {
-      newErrors.nombre =
-        "El nombre del escenario es obligatorio.";
+    if (!formData.organizacion) {
+      newErrors.organizacion = "Selecciona una organización.";
     }
 
-    if (!formData.organizacion) {
-      newErrors.organizacion =
-        "Selecciona una organización.";
+    if (!formData.codigo.trim()) {
+      newErrors.codigo = "El código es obligatorio. Ej: R-001";
     }
 
     if (!formData.activo) {
-      newErrors.activo =
-        "Selecciona un activo.";
+      newErrors.activo = "Selecciona el activo expuesto.";
     }
 
     if (!formData.amenaza) {
-      newErrors.amenaza =
-        "Selecciona una amenaza.";
+      newErrors.amenaza = "Selecciona la amenaza que aplica.";
+    }
+
+    if (!formData.vulnerabilidad) {
+      newErrors.vulnerabilidad = "Selecciona la vulnerabilidad explotada.";
     }
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
-    if (!validate()) {
-      return;
-    }
+    if (!validate()) return;
 
     const payload = {
-      nombre: formData.nombre.trim(),
-      descripcion:
-        formData.descripcion.trim(),
-      organizacion: Number(
-        formData.organizacion
-      ),
+      organizacion: Number(formData.organizacion),
+      codigo: formData.codigo.trim().toUpperCase(),
       activo: Number(formData.activo),
       amenaza: Number(formData.amenaza),
-      vulnerabilidad:
-        formData.vulnerabilidad
-          ? Number(formData.vulnerabilidad)
-          : null,
-      frecuencia: Number(
-        formData.frecuencia
-      ),
-      impacto: Number(formData.impacto),
-      probabilidad:
-        formData.probabilidad,
-      nivel_riesgo: riskLevel,
-      estado: formData.estado,
-      activo_estado: Boolean(
-        formData.activoEstado
-      ),
+      vulnerabilidad: formData.vulnerabilidad ? Number(formData.vulnerabilidad) : null,
+      descripcion_resultado: formData.descripcion_resultado.trim(),
     };
 
     try {
       await onSubmit(payload);
     } catch (error) {
-      setSubmitError(
-        error.message ||
-          "No fue posible guardar el escenario."
-      );
+      setSubmitError(error.message || "No fue posible guardar el escenario.");
     }
   };
 
   return (
     <Dialog
       open={open}
-      onClose={
-        loading ? undefined : onClose
-      }
+      onClose={loading ? undefined : onClose}
       fullWidth
-      maxWidth="md"
-    >
+      maxWidth="md">
       <DialogTitle>
-        {isEditing
-          ? "Editar escenario de riesgo"
-          : "Nuevo escenario de riesgo"}
+        {isEditing ? "Editar escenario de riesgo" : "Nuevo escenario de riesgo"}
       </DialogTitle>
 
       <DialogContent dividers>
         <Stack spacing={3}>
           {submitError && (
-            <Alert severity="error">
-              {submitError}
-            </Alert>
+            <Alert severity="error">{submitError}</Alert>
           )}
 
           <Box sx={{ pt: 1 }}>
-            <Grid container spacing={2.5}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Nombre del escenario"
-                  name="nombre"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  error={Boolean(errors.nombre)}
-                  helperText={errors.nombre}
-                  disabled={loading}
-                  placeholder="Ejemplo: Ransomware sobre servidor de base de datos"
-                />
-              </Grid>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 2 }}>
+              Un escenario de riesgo vincula un <strong>activo</strong>, una{" "}
+              <strong>amenaza</strong> y una <strong>vulnerabilidad</strong> para
+              describir cómo podría materializarse una pérdida. Cada escenario es
+              la unidad base del análisis FAIR (ISO/IEC 27005, sección 4.4).
+            </Typography>
 
-              <Grid item xs={12} md={6}>
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} md={4}>
                 <FormControl
                   fullWidth
                   required
-                  error={Boolean(
-                    errors.organizacion
-                  )}
-                >
-                  <InputLabel id="escenario-organizacion-label">
-                    Organización
-                  </InputLabel>
-
+                  error={Boolean(errors.organizacion)}>
+                  <InputLabel>Organización</InputLabel>
                   <Select
-                    labelId="escenario-organizacion-label"
                     label="Organización"
                     name="organizacion"
                     value={formData.organizacion}
                     onChange={handleChange}
-                    disabled={loading}
-                  >
+                    disabled={loading}>
                     <MenuItem value="">
-                      <em>
-                        Selecciona una organización
-                      </em>
+                      <em>Selecciona una organización</em>
                     </MenuItem>
-
-                    {organizaciones.map(
-                      (organizacion) => (
-                        <MenuItem
-                          key={organizacion.id}
-                          value={organizacion.id}
-                        >
-                          {organizacion.nombre}
-                        </MenuItem>
-                      )
-                    )}
+                    {organizaciones.map((org) => (
+                      <MenuItem key={org.id} value={org.id}>
+                        {org.nombre}
+                      </MenuItem>
+                    ))}
                   </Select>
-
                   {errors.organizacion && (
-                    <FormHelperText>
-                      {errors.organizacion}
-                    </FormHelperText>
+                    <FormHelperText>{errors.organizacion}</FormHelperText>
                   )}
                 </FormControl>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Código del escenario"
+                  name="codigo"
+                  value={formData.codigo}
+                  onChange={handleChange}
+                  error={Boolean(errors.codigo)}
+                  helperText={errors.codigo || "Único por organización · Ej: R-001"}
+                  disabled={loading}
+                  inputProps={{ style: { textTransform: "uppercase" } }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
                 <FormControl
                   fullWidth
                   required
-                  error={Boolean(errors.activo)}
-                >
-                  <InputLabel id="escenario-activo-label">
-                    Activo
-                  </InputLabel>
-
+                  error={Boolean(errors.activo)}>
+                  <InputLabel>Activo expuesto</InputLabel>
                   <Select
-                    labelId="escenario-activo-label"
-                    label="Activo"
+                    label="Activo expuesto"
                     name="activo"
                     value={formData.activo}
                     onChange={handleChange}
-                    disabled={
-                      loading ||
-                      !formData.organizacion
-                    }
-                  >
+                    disabled={loading || !formData.organizacion}>
                     <MenuItem value="">
-                      <em>
-                        Selecciona un activo
-                      </em>
+                      <em>Selecciona un activo</em>
                     </MenuItem>
-
-                    {filteredAssets.map(
-                      (activo) => (
-                        <MenuItem
-                          key={activo.id}
-                          value={activo.id}
-                        >
-                          {activo.nombre}
-                        </MenuItem>
-                      )
-                    )}
+                    {filteredActivos.map((activo) => (
+                      <MenuItem key={activo.id} value={activo.id}>
+                        {activo.nombre}
+                      </MenuItem>
+                    ))}
                   </Select>
-
                   {errors.activo && (
-                    <FormHelperText>
-                      {errors.activo}
-                    </FormHelperText>
+                    <FormHelperText>{errors.activo}</FormHelperText>
+                  )}
+                  {!formData.organizacion && (
+                    <FormHelperText>Selecciona primero una organización</FormHelperText>
                   )}
                 </FormControl>
               </Grid>
@@ -526,140 +255,54 @@ const EscenarioFormDialog = ({
                 <FormControl
                   fullWidth
                   required
-                  error={Boolean(errors.amenaza)}
-                >
-                  <InputLabel id="escenario-amenaza-label">
-                    Amenaza
-                  </InputLabel>
-
+                  error={Boolean(errors.amenaza)}>
+                  <InputLabel>Amenaza</InputLabel>
                   <Select
-                    labelId="escenario-amenaza-label"
                     label="Amenaza"
                     name="amenaza"
                     value={formData.amenaza}
                     onChange={handleChange}
-                    disabled={
-                      loading ||
-                      !formData.activo
-                    }
-                  >
+                    disabled={loading || !formData.organizacion}>
                     <MenuItem value="">
-                      <em>
-                        Selecciona una amenaza
-                      </em>
+                      <em>Selecciona una amenaza</em>
                     </MenuItem>
-
-                    {filteredThreats.map(
-                      (amenaza) => (
-                        <MenuItem
-                          key={amenaza.id}
-                          value={amenaza.id}
-                        >
-                          {amenaza.nombre}
-                        </MenuItem>
-                      )
-                    )}
+                    {filteredAmenazas.map((amenaza) => (
+                      <MenuItem key={amenaza.id} value={amenaza.id}>
+                        {amenaza.nombre}
+                      </MenuItem>
+                    ))}
                   </Select>
-
                   {errors.amenaza && (
-                    <FormHelperText>
-                      {errors.amenaza}
-                    </FormHelperText>
+                    <FormHelperText>{errors.amenaza}</FormHelperText>
                   )}
                 </FormControl>
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="escenario-vulnerabilidad-label">
-                    Vulnerabilidad
-                  </InputLabel>
-
+                <FormControl
+                  fullWidth
+                  required
+                  error={Boolean(errors.vulnerabilidad)}>
+                  <InputLabel>Vulnerabilidad explotada</InputLabel>
                   <Select
-                    labelId="escenario-vulnerabilidad-label"
-                    label="Vulnerabilidad"
+                    label="Vulnerabilidad explotada"
                     name="vulnerabilidad"
-                    value={
-                      formData.vulnerabilidad
-                    }
+                    value={formData.vulnerabilidad}
                     onChange={handleChange}
-                    disabled={
-                      loading ||
-                      !formData.activo
-                    }
-                  >
+                    disabled={loading || !formData.organizacion}>
                     <MenuItem value="">
-                      Sin vulnerabilidad específica
+                      <em>Sin vulnerabilidad específica</em>
                     </MenuItem>
-
-                    {filteredVulnerabilities.map(
-                      (vulnerabilidad) => (
-                        <MenuItem
-                          key={vulnerabilidad.id}
-                          value={vulnerabilidad.id}
-                        >
-                          {vulnerabilidad.nombre}
-                          {vulnerabilidad.severidad
-                            ? ` — ${vulnerabilidad.severidad}`
-                            : ""}
-                        </MenuItem>
-                      )
-                    )}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="escenario-probabilidad-label">
-                    Probabilidad
-                  </InputLabel>
-
-                  <Select
-                    labelId="escenario-probabilidad-label"
-                    label="Probabilidad"
-                    name="probabilidad"
-                    value={formData.probabilidad}
-                    onChange={handleChange}
-                    disabled={loading}
-                  >
-                    {PROBABILIDADES.map(
-                      (probabilidad) => (
-                        <MenuItem
-                          key={probabilidad}
-                          value={probabilidad}
-                        >
-                          {probabilidad}
-                        </MenuItem>
-                      )
-                    )}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="escenario-estado-label">
-                    Estado
-                  </InputLabel>
-
-                  <Select
-                    labelId="escenario-estado-label"
-                    label="Estado"
-                    name="estado"
-                    value={formData.estado}
-                    onChange={handleChange}
-                    disabled={loading}
-                  >
-                    {ESTADOS.map((estado) => (
-                      <MenuItem
-                        key={estado}
-                        value={estado}
-                      >
-                        {estado}
+                    {filteredVulnerabilidades.map((vuln) => (
+                      <MenuItem key={vuln.id} value={vuln.id}>
+                        {vuln.nombre}
+                        {vuln.categoria ? ` — ${vuln.categoria}` : ""}
                       </MenuItem>
                     ))}
                   </Select>
+                  {errors.vulnerabilidad && (
+                    <FormHelperText>{errors.vulnerabilidad}</FormHelperText>
+                  )}
                 </FormControl>
               </Grid>
 
@@ -668,194 +311,13 @@ const EscenarioFormDialog = ({
                   fullWidth
                   multiline
                   minRows={3}
-                  label="Descripción del evento de riesgo"
-                  name="descripcion"
-                  value={formData.descripcion}
+                  label="Descripción del resultado del riesgo"
+                  name="descripcion_resultado"
+                  value={formData.descripcion_resultado}
                   onChange={handleChange}
                   disabled={loading}
-                  placeholder="Describe cómo la amenaza podría explotar la vulnerabilidad y afectar al activo."
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Box
-                  sx={{
-                    border:
-                      "1px solid rgba(15,61,91,0.12)",
-                    borderRadius: 2,
-                    p: 3,
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    gutterBottom
-                  >
-                    Evaluación preliminar
-                  </Typography>
-
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 3 }}
-                  >
-                    Evalúa la frecuencia y el
-                    impacto en una escala de 1 a 5.
-                  </Typography>
-
-                  <Grid container spacing={4}>
-                    <Grid item xs={12} md={6}>
-                      <Typography
-                        variant="body2"
-                        fontWeight={700}
-                      >
-                        Frecuencia estimada
-                      </Typography>
-
-                      <Slider
-                        value={Number(
-                          formData.frecuencia
-                        )}
-                        onChange={handleSliderChange(
-                          "frecuencia"
-                        )}
-                        min={1}
-                        max={5}
-                        step={1}
-                        marks={SCALE_MARKS}
-                        valueLabelDisplay="auto"
-                        disabled={loading}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                      <Typography
-                        variant="body2"
-                        fontWeight={700}
-                      >
-                        Impacto estimado
-                      </Typography>
-
-                      <Slider
-                        value={Number(
-                          formData.impacto
-                        )}
-                        onChange={handleSliderChange(
-                          "impacto"
-                        )}
-                        min={1}
-                        max={5}
-                        step={1}
-                        marks={SCALE_MARKS}
-                        valueLabelDisplay="auto"
-                        disabled={loading}
-                      />
-                    </Grid>
-                  </Grid>
-
-                  <Box
-                    sx={{
-                      mt: 3,
-                      display: "flex",
-                      flexDirection: {
-                        xs: "column",
-                        sm: "row",
-                      },
-                      justifyContent:
-                        "space-between",
-                      alignItems: {
-                        xs: "flex-start",
-                        sm: "center",
-                      },
-                      gap: 2,
-                    }}
-                  >
-                    <Box>
-                      <Typography
-                        color="text.secondary"
-                      >
-                        Puntaje preliminar
-                      </Typography>
-
-                      <Typography
-                        variant="h4"
-                        fontWeight={800}
-                      >
-                        {riskScore} / 25
-                      </Typography>
-                    </Box>
-
-                    <Chip
-                      label={`Riesgo ${riskLevel}`}
-                      color={getRiskColor(
-                        riskLevel
-                      )}
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: "1rem",
-                        px: 1.5,
-                      }}
-                    />
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Frecuencia anual"
-                  name="frecuencia"
-                  value={formData.frecuencia}
-                  onChange={handleChange}
-                  disabled={loading}
-                  inputProps={{
-                    min: 0,
-                    step: "0.01",
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        eventos/año
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Impacto estimado"
-                  name="impacto"
-                  value={formData.impacto}
-                  onChange={handleChange}
-                  disabled={loading}
-                  inputProps={{
-                    min: 0,
-                    step: "0.01",
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={Boolean(
-                        formData.activoEstado
-                      )}
-                      onChange={handleChange}
-                      name="activoEstado"
-                      disabled={loading}
-                    />
-                  }
-                  label={
-                    formData.activoEstado
-                      ? "Escenario habilitado"
-                      : "Escenario deshabilitado"
-                  }
+                  placeholder="Ej: Cifrado y pérdida de datos de clientes con impacto operativo, legal y reputacional."
+                  helperText="Describe el impacto concreto si el escenario se materializa."
                 />
               </Grid>
             </Grid>
@@ -864,29 +326,17 @@ const EscenarioFormDialog = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button
-          onClick={onClose}
-          disabled={loading}
-        >
+        <Button onClick={onClose} disabled={loading}>
           Cancelar
         </Button>
-
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={loading}
-        >
+          disabled={loading}>
           {loading && (
-            <CircularProgress
-              size={20}
-              color="inherit"
-              sx={{ mr: 1 }}
-            />
+            <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
           )}
-
-          {isEditing
-            ? "Guardar cambios"
-            : "Crear escenario"}
+          {isEditing ? "Guardar cambios" : "Crear escenario"}
         </Button>
       </DialogActions>
     </Dialog>

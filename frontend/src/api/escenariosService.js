@@ -66,132 +66,52 @@ const getObjectName = (
   return defaultValue;
 };
 
+// Backend model: EscenarioRiesgo
+// Fields: id, organizacion (int FK), organizacion_nombre, codigo, activo (int FK), activo_nombre,
+//         amenaza (int FK), amenaza_nombre, vulnerabilidad (int FK nullable), vulnerabilidad_nombre,
+//         controles_mitigantes (M2M), descripcion_resultado, fecha_creacion
 const normalizeEscenario = (escenario) => {
-  const organizacion = escenario?.organizacion;
-  const activo = escenario?.activo;
-  const amenaza = escenario?.amenaza;
-  const vulnerabilidad = escenario?.vulnerabilidad;
-
   return {
     ...escenario,
 
-    id:
-      escenario?.id ??
-      escenario?.escenario_id ??
-      escenario?.pk ??
-      null,
+    id: escenario?.id ?? escenario?.pk ?? null,
 
-    nombre:
-      escenario?.nombre ??
-      escenario?.nombre_escenario ??
-      escenario?.titulo ??
-      "Escenario sin nombre",
+    codigo: escenario?.codigo ?? "",
 
-    descripcion:
-      escenario?.descripcion ??
-      escenario?.detalle ??
-      escenario?.evento_riesgo ??
-      "",
+    descripcionResultado: escenario?.descripcion_resultado ?? "",
 
-    organizacionId:
-      getObjectId(organizacion) ??
-      escenario?.organizacion_id ??
-      null,
+    organizacionId: escenario?.organizacion ?? escenario?.organizacion_id ?? null,
 
     organizacionNombre:
-      getObjectName(
-        organizacion,
-        ["nombre", "nombre_organizacion"],
-        escenario?.organizacion_nombre ??
-          escenario?.nombre_organizacion ??
-          "Sin organización"
-      ),
+      escenario?.organizacion_nombre ??
+      escenario?.nombre_organizacion ??
+      "Sin organización",
 
-    activoId:
-      getObjectId(activo) ??
-      escenario?.activo_id ??
-      null,
+    activoId: escenario?.activo ?? escenario?.activo_id ?? null,
 
     activoNombre:
-      getObjectName(
-        activo,
-        ["nombre", "nombre_activo"],
-        escenario?.activo_nombre ??
-          escenario?.nombre_activo ??
-          "Sin activo"
-      ),
+      escenario?.activo_nombre ??
+      escenario?.nombre_activo ??
+      "Sin activo",
 
-    amenazaId:
-      getObjectId(amenaza) ??
-      escenario?.amenaza_id ??
-      null,
+    amenazaId: escenario?.amenaza ?? escenario?.amenaza_id ?? null,
 
     amenazaNombre:
-      getObjectName(
-        amenaza,
-        ["nombre", "nombre_amenaza"],
-        escenario?.amenaza_nombre ??
-          escenario?.nombre_amenaza ??
-          "Sin amenaza"
-      ),
+      escenario?.amenaza_nombre ??
+      escenario?.nombre_amenaza ??
+      "Sin amenaza",
 
-    vulnerabilidadId:
-      getObjectId(vulnerabilidad) ??
-      escenario?.vulnerabilidad_id ??
-      null,
+    vulnerabilidadId: escenario?.vulnerabilidad ?? escenario?.vulnerabilidad_id ?? null,
 
     vulnerabilidadNombre:
-      getObjectName(
-        vulnerabilidad,
-        ["nombre", "nombre_vulnerabilidad"],
-        escenario?.vulnerabilidad_nombre ??
-          escenario?.nombre_vulnerabilidad ??
-          "Sin vulnerabilidad"
-      ),
+      escenario?.vulnerabilidad_nombre ??
+      escenario?.nombre_vulnerabilidad ??
+      "Sin vulnerabilidad",
 
-    frecuencia: Number(
-      escenario?.frecuencia ??
-        escenario?.frecuencia_anual ??
-        escenario?.lef ??
-        escenario?.loss_event_frequency ??
-        0
-    ),
+    fechaCreacion: escenario?.fecha_creacion ?? null,
 
-    impacto: Number(
-      escenario?.impacto ??
-        escenario?.impacto_estimado ??
-        escenario?.magnitud_perdida ??
-        escenario?.loss_magnitude ??
-        0
-    ),
-
-    probabilidad:
-      escenario?.probabilidad ??
-      escenario?.nivel_probabilidad ??
-      escenario?.likelihood ??
-      "Media",
-
-    nivelRiesgo:
-      escenario?.nivel_riesgo ??
-      escenario?.nivelRiesgo ??
-      escenario?.risk_level ??
-      "",
-
-    estado:
-      escenario?.estado ??
-      escenario?.status ??
-      "Identificado",
-
-    activoEstado:
-      escenario?.activo_estado ??
-      escenario?.habilitado ??
-      true,
-
-    fechaCreacion:
-      escenario?.fecha_creacion ??
-      escenario?.created_at ??
-      escenario?.createdAt ??
-      null,
+    // alias for compatibility with selects
+    nombre: escenario?.codigo ?? `Escenario #${escenario?.id}`,
   };
 };
 
@@ -225,52 +145,17 @@ const normalizeActivo = (activo) => ({
 });
 
 const normalizeAmenaza = (amenaza) => ({
-  id:
-    amenaza?.id ??
-    amenaza?.amenaza_id ??
-    amenaza?.pk,
-
-  nombre:
-    amenaza?.nombre ??
-    amenaza?.nombre_amenaza ??
-    "Amenaza sin nombre",
-
-  organizacionId:
-    getObjectId(amenaza?.organizacion) ??
-    amenaza?.organizacion_id ??
-    null,
-
-  activoId:
-    getObjectId(amenaza?.activo) ??
-    amenaza?.activo_id ??
-    null,
+  id: amenaza?.id ?? amenaza?.pk,
+  nombre: amenaza?.nombre ?? "Amenaza sin nombre",
+  origen: amenaza?.origen ?? "",
+  organizacionId: amenaza?.organizacion ?? amenaza?.organizacion_id ?? null,
 });
 
 const normalizeVulnerabilidad = (vulnerabilidad) => ({
-  id:
-    vulnerabilidad?.id ??
-    vulnerabilidad?.vulnerabilidad_id ??
-    vulnerabilidad?.pk,
-
-  nombre:
-    vulnerabilidad?.nombre ??
-    vulnerabilidad?.nombre_vulnerabilidad ??
-    "Vulnerabilidad sin nombre",
-
-  organizacionId:
-    getObjectId(vulnerabilidad?.organizacion) ??
-    vulnerabilidad?.organizacion_id ??
-    null,
-
-  activoId:
-    getObjectId(vulnerabilidad?.activo) ??
-    vulnerabilidad?.activo_id ??
-    null,
-
-  severidad:
-    vulnerabilidad?.severidad ??
-    vulnerabilidad?.nivel_severidad ??
-    "",
+  id: vulnerabilidad?.id ?? vulnerabilidad?.pk,
+  nombre: vulnerabilidad?.nombre ?? "Vulnerabilidad sin nombre",
+  categoria: vulnerabilidad?.categoria ?? "",
+  organizacionId: vulnerabilidad?.organizacion ?? vulnerabilidad?.organizacion_id ?? null,
 });
 
 const getErrorMessage = (error) => {

@@ -77,167 +77,92 @@ const numericValue = (...values) => {
   return Number.isFinite(number) ? number : 0;
 };
 
+// Backend model: AnalisisRiesgo
+// Fields: id, escenario (int OneToOne FK), escenario_codigo (read_only),
+//         probabilidad (int 1-5), impacto (int 1-5),
+//         lef_min, lef_probable, lef_max (decimal),
+//         plm_min, plm_probable, plm_max (decimal),
+//         slm_min, slm_probable, slm_max (decimal),
+//         notas, fecha_analisis, fecha_actualizacion
 const normalizeAnalisis = (analisis) => {
-  const organizacion = analisis?.organizacion;
   const escenario = analisis?.escenario;
 
-  const lefMin = numericValue(
-    analisis?.lef_min,
-    analisis?.frecuencia_min,
-    analisis?.frecuencia_minima
-  );
+  const probabilidad = numericValue(analisis?.probabilidad);
+  const impacto = numericValue(analisis?.impacto);
+  const riesgoSimple = probabilidad * impacto;
 
-  const lefMode = numericValue(
-    analisis?.lef_mode,
-    analisis?.lef_moda,
-    analisis?.frecuencia_probable,
-    analisis?.frecuencia_mas_probable
-  );
+  const lefMin = numericValue(analisis?.lef_min);
+  const lefProbable = numericValue(analisis?.lef_probable);
+  const lefMax = numericValue(analisis?.lef_max);
 
-  const lefMax = numericValue(
-    analisis?.lef_max,
-    analisis?.frecuencia_max,
-    analisis?.frecuencia_maxima
-  );
+  const plmMin = numericValue(analisis?.plm_min);
+  const plmProbable = numericValue(analisis?.plm_probable);
+  const plmMax = numericValue(analisis?.plm_max);
 
-  const lmMin = numericValue(
-    analisis?.lm_min,
-    analisis?.perdida_min,
-    analisis?.magnitud_minima
-  );
+  const slmMin = numericValue(analisis?.slm_min);
+  const slmProbable = numericValue(analisis?.slm_probable);
+  const slmMax = numericValue(analisis?.slm_max);
 
-  const lmMode = numericValue(
-    analisis?.lm_mode,
-    analisis?.lm_moda,
-    analisis?.perdida_probable,
-    analisis?.magnitud_mas_probable
-  );
+  // ALE = LEF_probable × (PLM_probable + SLM_probable)
+  const aleEstimado = lefProbable * (plmProbable + slmProbable);
 
-  const lmMax = numericValue(
-    analisis?.lm_max,
-    analisis?.perdida_max,
-    analisis?.magnitud_maxima
-  );
-
-  const lefExpected = numericValue(
-    analisis?.lef_esperada,
-    analisis?.frecuencia_esperada,
-    (lefMin + lefMode + lefMax) / 3
-  );
-
-  const lmExpected = numericValue(
-    analisis?.lm_esperada,
-    analisis?.magnitud_esperada,
-    analisis?.perdida_esperada_evento,
-    (lmMin + lmMode + lmMax) / 3
-  );
-
-  const annualLoss = numericValue(
-    analisis?.perdida_anual_esperada,
-    analisis?.ale,
-    analisis?.riesgo_anual,
-    lefExpected * lmExpected
-  );
+  const niveles = ["MUY_BAJO", "BAJO", "MEDIO", "ALTO", "MUY_ALTO"];
+  const getNivelSimple = (r) => {
+    if (r >= 20) return "MUY_ALTO";
+    if (r >= 12) return "ALTO";
+    if (r >= 6) return "MEDIO";
+    if (r >= 3) return "BAJO";
+    return "MUY_BAJO";
+  };
 
   return {
     ...analisis,
 
-    id:
-      analisis?.id ??
-      analisis?.analisis_id ??
-      analisis?.pk ??
-      null,
-
-    nombre:
-      analisis?.nombre ??
-      analisis?.nombre_analisis ??
-      analisis?.titulo ??
-      "Análisis FAIR",
-
-    descripcion:
-      analisis?.descripcion ??
-      analisis?.observaciones ??
-      "",
-
-    organizacionId:
-      getObjectId(organizacion) ??
-      analisis?.organizacion_id ??
-      null,
-
-    organizacionNombre:
-      getObjectName(
-        organizacion,
-        ["nombre", "nombre_organizacion"],
-        analisis?.organizacion_nombre ??
-          analisis?.nombre_organizacion ??
-          "Sin organización"
-      ),
+    id: analisis?.id ?? analisis?.pk ?? null,
 
     escenarioId:
-      getObjectId(escenario) ??
-      analisis?.escenario_id ??
-      null,
+      typeof escenario === "object"
+        ? escenario?.id ?? null
+        : escenario ?? null,
 
-    escenarioNombre:
-      getObjectName(
-        escenario,
-        ["nombre", "nombre_escenario"],
-        analisis?.escenario_nombre ??
-          analisis?.nombre_escenario ??
-          "Sin escenario"
-      ),
+    escenarioCodigo: analisis?.escenario_codigo ?? "Sin código",
 
-    lefMin,
-    lefMode,
-    lefMax,
-    lefExpected,
+    // alias for table display
+    nombre: analisis?.escenario_codigo ?? `Análisis #${analisis?.id ?? ""}`,
+    escenarioNombre: analisis?.escenario_codigo ?? "Sin escenario",
+    organizacionNombre: "—",
 
-    lmMin,
-    lmMode,
-    lmMax,
-    lmExpected,
+    probabilidad,
+    impacto,
+    riesgoSimple,
+    nivelRiesgoSimple: getNivelSimple(riesgoSimple),
 
-    perdidaAnualEsperada: annualLoss,
+    lef_min: lefMin,
+    lef_probable: lefProbable,
+    lef_max: lefMax,
 
-    nivelRiesgo:
-      analisis?.nivel_riesgo ??
-      analisis?.clasificacion_riesgo ??
-      analisis?.risk_level ??
-      "",
+    plm_min: plmMin,
+    plm_probable: plmProbable,
+    plm_max: plmMax,
 
-    estado:
-      analisis?.estado ??
-      analisis?.status ??
-      "Borrador",
+    slm_min: slmMin,
+    slm_probable: slmProbable,
+    slm_max: slmMax,
 
-    iteraciones: numericValue(
-      analisis?.iteraciones,
-      analisis?.numero_iteraciones,
-      10000
-    ),
+    aleEstimado,
 
-    confianza: numericValue(
-      analisis?.nivel_confianza,
-      analisis?.confianza,
-      95
-    ),
+    // aliases for table display compatibility
+    lefExpected: lefProbable,
+    lmExpected: plmProbable,
+    perdidaAnualEsperada: aleEstimado,
+    nivelRiesgo: getNivelSimple(riesgoSimple),
+    iteraciones: 10000,
+    estado: "—",
 
-    fechaCreacion:
-      analisis?.fecha_creacion ??
-      analisis?.created_at ??
-      null,
+    notas: analisis?.notas ?? "",
 
-    fechaActualizacion:
-      analisis?.fecha_actualizacion ??
-      analisis?.updated_at ??
-      null,
-
-    monteCarloEjecutado: Boolean(
-      analisis?.montecarlo_ejecutado ??
-        analisis?.monte_carlo_ejecutado ??
-        analisis?.tiene_simulacion ??
-        false
-    ),
+    fechaAnalisis: analisis?.fecha_analisis ?? null,
+    fechaActualizacion: analisis?.fecha_actualizacion ?? null,
   };
 };
 

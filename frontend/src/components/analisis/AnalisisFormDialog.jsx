@@ -15,97 +15,65 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Slider,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const INITIAL_FORM = {
-  nombre: "",
-  descripcion: "",
-  organizacion: "",
-  escenario: "",
+// ──────────────────────────────────────────────
+// Matches backend AnalisisRiesgo model fields exactly:
+//   escenario (FK), probabilidad (1-5), impacto (1-5),
+//   lef_min/probable/max, plm_min/probable/max, slm_min/probable/max, notas
+// ──────────────────────────────────────────────
 
-  lefMin: "",
-  lefMode: "",
-  lefMax: "",
-
-  lmMin: "",
-  lmMode: "",
-  lmMax: "",
-
-  estado: "Borrador",
-  iteraciones: 10000,
-  nivelConfianza: 95,
-};
-
-const ESTADOS = [
-  "Borrador",
-  "En análisis",
-  "Completado",
-  "Aprobado",
-  "Archivado",
+const SCALE_MARKS = [
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4" },
+  { value: 5, label: "5" },
 ];
 
-const getRiskLevel = (annualLoss) => {
-  const value = Number(annualLoss || 0);
-
-  if (value >= 1000000) {
-    return "Crítico";
-  }
-
-  if (value >= 250000) {
-    return "Alto";
-  }
-
-  if (value >= 50000) {
-    return "Medio";
-  }
-
-  return "Bajo";
+const INITIAL_FORM = {
+  escenario: "",
+  probabilidad: 3,
+  impacto: 3,
+  lef_min: "",
+  lef_probable: "",
+  lef_max: "",
+  plm_min: "",
+  plm_probable: "",
+  plm_max: "",
+  slm_min: "0",
+  slm_probable: "0",
+  slm_max: "0",
+  notas: "",
 };
 
-const getRiskColor = (level) => {
-  if (level === "Crítico") {
-    return "error";
-  }
-
-  if (level === "Alto") {
-    return "warning";
-  }
-
-  if (level === "Medio") {
-    return "info";
-  }
-
-  return "success";
+const getRiesgoSimpleColor = (nivel) => {
+  if (nivel === "MUY_ALTO") return "error";
+  if (nivel === "ALTO") return "warning";
+  if (nivel === "MEDIO") return "info";
+  if (nivel === "BAJO") return "success";
+  return "default";
 };
 
-const averageThree = (
-  minimum,
-  mostLikely,
-  maximum
-) => {
-  return (
-    (Number(minimum || 0) +
-      Number(mostLikely || 0) +
-      Number(maximum || 0)) /
-    3
-  );
+const getRiesgoSimpleLabel = (r) => {
+  if (r >= 20) return "MUY ALTO";
+  if (r >= 12) return "ALTO";
+  if (r >= 6) return "MEDIO";
+  if (r >= 3) return "BAJO";
+  return "MUY BAJO";
 };
 
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat("es-EC", {
+const formatUSD = (value) =>
+  new Intl.NumberFormat("es-EC", {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2,
   }).format(Number(value || 0));
-};
 
 const AnalisisFormDialog = ({
   open,
@@ -116,84 +84,30 @@ const AnalisisFormDialog = ({
   escenarios,
   loading,
 }) => {
-  const [formData, setFormData] =
-    useState(INITIAL_FORM);
-
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] =
-    useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const isEditing = Boolean(analisis?.id);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
 
     if (analisis) {
       setFormData({
-        nombre:
-          analisis.nombre ??
-          analisis.nombre_analisis ??
-          "",
-
-        descripcion:
-          analisis.descripcion ??
-          analisis.observaciones ??
-          "",
-
-        organizacion:
-          analisis.organizacionId ??
-          analisis.organizacion_id ??
-          "",
-
-        escenario:
-          analisis.escenarioId ??
-          analisis.escenario_id ??
-          "",
-
-        lefMin:
-          analisis.lefMin ??
-          analisis.lef_min ??
-          "",
-
-        lefMode:
-          analisis.lefMode ??
-          analisis.lef_mode ??
-          "",
-
-        lefMax:
-          analisis.lefMax ??
-          analisis.lef_max ??
-          "",
-
-        lmMin:
-          analisis.lmMin ??
-          analisis.lm_min ??
-          "",
-
-        lmMode:
-          analisis.lmMode ??
-          analisis.lm_mode ??
-          "",
-
-        lmMax:
-          analisis.lmMax ??
-          analisis.lm_max ??
-          "",
-
-        estado:
-          analisis.estado ??
-          "Borrador",
-
-        iteraciones:
-          analisis.iteraciones ??
-          10000,
-
-        nivelConfianza:
-          analisis.confianza ??
-          analisis.nivel_confianza ??
-          95,
+        escenario: analisis.escenarioId ?? analisis.escenario ?? "",
+        probabilidad: Number(analisis.probabilidad ?? 3),
+        impacto: Number(analisis.impacto ?? 3),
+        lef_min: analisis.lef_min ?? "",
+        lef_probable: analisis.lef_probable ?? "",
+        lef_max: analisis.lef_max ?? "",
+        plm_min: analisis.plm_min ?? "",
+        plm_probable: analisis.plm_probable ?? "",
+        plm_max: analisis.plm_max ?? "",
+        slm_min: analisis.slm_min ?? "0",
+        slm_probable: analisis.slm_probable ?? "0",
+        slm_max: analisis.slm_max ?? "0",
+        notas: analisis.notas ?? "",
       });
     } else {
       setFormData(INITIAL_FORM);
@@ -203,441 +117,235 @@ const AnalisisFormDialog = ({
     setSubmitError("");
   }, [open, analisis]);
 
-  const filteredScenarios = useMemo(() => {
-    if (!formData.organizacion) {
-      return escenarios;
-    }
+  const riesgoSimple = useMemo(
+    () => formData.probabilidad * formData.impacto,
+    [formData.probabilidad, formData.impacto]
+  );
 
-    return escenarios.filter(
-      (escenario) => {
-        if (!escenario.organizacionId) {
-          return true;
-        }
-
-        return (
-          String(
-            escenario.organizacionId
-          ) ===
-          String(formData.organizacion)
-        );
-      }
-    );
-  }, [
-    escenarios,
-    formData.organizacion,
-  ]);
-
-  const expectedLef = useMemo(() => {
-    return averageThree(
-      formData.lefMin,
-      formData.lefMode,
-      formData.lefMax
-    );
-  }, [
-    formData.lefMin,
-    formData.lefMode,
-    formData.lefMax,
-  ]);
-
-  const expectedLm = useMemo(() => {
-    return averageThree(
-      formData.lmMin,
-      formData.lmMode,
-      formData.lmMax
-    );
-  }, [
-    formData.lmMin,
-    formData.lmMode,
-    formData.lmMax,
-  ]);
-
-  const expectedAnnualLoss = useMemo(() => {
-    return expectedLef * expectedLm;
-  }, [expectedLef, expectedLm]);
-
-  const riskLevel = useMemo(() => {
-    return getRiskLevel(
-      expectedAnnualLoss
-    );
-  }, [expectedAnnualLoss]);
+  // ALE = LEF_probable × (PLM_probable + SLM_probable)
+  const aleEstimado = useMemo(() => {
+    const lef = Number(formData.lef_probable || 0);
+    const plm = Number(formData.plm_probable || 0);
+    const slm = Number(formData.slm_probable || 0);
+    return lef * (plm + slm);
+  }, [formData.lef_probable, formData.plm_probable, formData.slm_probable]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-
-    setFormData((previous) => {
-      const updated = {
-        ...previous,
-        [name]: value,
-      };
-
-      if (name === "organizacion") {
-        updated.escenario = "";
-      }
-
-      return updated;
-    });
-
-    setErrors((previous) => ({
-      ...previous,
-      [name]: "",
-    }));
-
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
     setSubmitError("");
   };
 
-  const validateTriangularValues = (
-    minimum,
-    mostLikely,
-    maximum,
-    prefix,
-    newErrors
-  ) => {
-    const min = Number(minimum);
-    const mode = Number(mostLikely);
-    const max = Number(maximum);
+  const handleSlider = (field) => (_, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
-    if (
-      minimum === "" ||
-      mostLikely === "" ||
-      maximum === ""
-    ) {
-      newErrors[prefix] =
-        "Completa los tres valores.";
+  const validateTriangular = (min, probable, max, key, errs) => {
+    const mn = Number(min);
+    const pr = Number(probable);
+    const mx = Number(max);
+
+    if (min === "" || probable === "" || max === "") {
+      errs[key] = "Completa los tres valores (mínimo, probable, máximo).";
       return;
     }
-
-    if (min < 0 || mode < 0 || max < 0) {
-      newErrors[prefix] =
-        "Los valores no pueden ser negativos.";
+    if (mn < 0 || pr < 0 || mx < 0) {
+      errs[key] = "Los valores no pueden ser negativos.";
       return;
     }
-
-    if (min > mode || mode > max) {
-      newErrors[prefix] =
-        "Debe cumplirse: mínimo ≤ probable ≤ máximo.";
+    if (!(mn <= pr && pr <= mx)) {
+      errs[key] = "Debe cumplirse: mínimo ≤ probable ≤ máximo.";
     }
   };
 
   const validate = () => {
-    const newErrors = {};
-
-    if (!formData.nombre.trim()) {
-      newErrors.nombre =
-        "El nombre del análisis es obligatorio.";
-    }
-
-    if (!formData.organizacion) {
-      newErrors.organizacion =
-        "Selecciona una organización.";
-    }
+    const errs = {};
 
     if (!formData.escenario) {
-      newErrors.escenario =
-        "Selecciona un escenario.";
+      errs.escenario = "Selecciona el escenario de riesgo.";
     }
 
-    validateTriangularValues(
-      formData.lefMin,
-      formData.lefMode,
-      formData.lefMax,
-      "lef",
-      newErrors
-    );
+    validateTriangular(formData.lef_min, formData.lef_probable, formData.lef_max, "lef", errs);
+    validateTriangular(formData.plm_min, formData.plm_probable, formData.plm_max, "plm", errs);
+    validateTriangular(formData.slm_min, formData.slm_probable, formData.slm_max, "slm", errs);
 
-    validateTriangularValues(
-      formData.lmMin,
-      formData.lmMode,
-      formData.lmMax,
-      "lm",
-      newErrors
-    );
-
-    const iterations = Number(
-      formData.iteraciones
-    );
-
-    if (
-      !Number.isInteger(iterations) ||
-      iterations < 1000 ||
-      iterations > 1000000
-    ) {
-      newErrors.iteraciones =
-        "Las iteraciones deben estar entre 1.000 y 1.000.000.";
-    }
-
-    const confidence = Number(
-      formData.nivelConfianza
-    );
-
-    if (
-      confidence < 50 ||
-      confidence > 99.9
-    ) {
-      newErrors.nivelConfianza =
-        "El nivel de confianza debe estar entre 50 y 99.9.";
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async () => {
-    if (!validate()) {
-      return;
-    }
+    if (!validate()) return;
 
+    // Payload matches AnalisisRiesgo model fields exactly
     const payload = {
-      nombre: formData.nombre.trim(),
-      descripcion:
-        formData.descripcion.trim(),
-
-      organizacion: Number(
-        formData.organizacion
-      ),
-
-      escenario: Number(
-        formData.escenario
-      ),
-
-      lef_min: Number(formData.lefMin),
-      lef_mode: Number(formData.lefMode),
-      lef_max: Number(formData.lefMax),
-
-      lm_min: Number(formData.lmMin),
-      lm_mode: Number(formData.lmMode),
-      lm_max: Number(formData.lmMax),
-
-      lef_esperada: expectedLef,
-      lm_esperada: expectedLm,
-
-      perdida_anual_esperada:
-        expectedAnnualLoss,
-
-      nivel_riesgo: riskLevel,
-      estado: formData.estado,
-
-      iteraciones: Number(
-        formData.iteraciones
-      ),
-
-      nivel_confianza: Number(
-        formData.nivelConfianza
-      ),
+      escenario: Number(formData.escenario),
+      probabilidad: Number(formData.probabilidad),
+      impacto: Number(formData.impacto),
+      lef_min: Number(formData.lef_min),
+      lef_probable: Number(formData.lef_probable),
+      lef_max: Number(formData.lef_max),
+      plm_min: Number(formData.plm_min),
+      plm_probable: Number(formData.plm_probable),
+      plm_max: Number(formData.plm_max),
+      slm_min: Number(formData.slm_min || 0),
+      slm_probable: Number(formData.slm_probable || 0),
+      slm_max: Number(formData.slm_max || 0),
+      notas: formData.notas.trim(),
     };
 
     try {
       await onSubmit(payload);
     } catch (error) {
-      setSubmitError(
-        error.message ||
-          "No fue posible guardar el análisis."
-      );
+      setSubmitError(error.message || "No fue posible guardar el análisis.");
     }
   };
 
   return (
     <Dialog
       open={open}
-      onClose={
-        loading ? undefined : onClose
-      }
+      onClose={loading ? undefined : onClose}
       fullWidth
-      maxWidth="lg"
-    >
+      maxWidth="lg">
       <DialogTitle>
-        {isEditing
-          ? "Editar análisis FAIR"
-          : "Nuevo análisis FAIR"}
+        {isEditing ? "Editar análisis FAIR" : "Nuevo análisis FAIR"}
       </DialogTitle>
 
       <DialogContent dividers>
         <Stack spacing={3}>
-          {submitError && (
-            <Alert severity="error">
-              {submitError}
-            </Alert>
-          )}
+          {submitError && <Alert severity="error">{submitError}</Alert>}
+
+          <Typography variant="body2" color="text.secondary">
+            El análisis FAIR cuantifica el riesgo de un escenario mediante la
+            frecuencia de eventos de pérdida (LEF) y su magnitud (PLM + SLM). La
+            distribución PERT se usa en la simulación de Monte Carlo (sección 5.3).
+          </Typography>
 
           <Grid container spacing={2.5}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                label="Nombre del análisis"
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                error={Boolean(errors.nombre)}
-                helperText={errors.nombre}
-                disabled={loading}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <FormControl
-                fullWidth
-                required
-                error={Boolean(
-                  errors.organizacion
-                )}
-              >
-                <InputLabel>
-                  Organización
-                </InputLabel>
-
-                <Select
-                  name="organizacion"
-                  label="Organización"
-                  value={formData.organizacion}
-                  onChange={handleChange}
-                  disabled={loading}
-                >
-                  <MenuItem value="">
-                    <em>
-                      Selecciona una organización
-                    </em>
-                  </MenuItem>
-
-                  {organizaciones.map(
-                    (organizacion) => (
-                      <MenuItem
-                        key={organizacion.id}
-                        value={organizacion.id}
-                      >
-                        {organizacion.nombre}
-                      </MenuItem>
-                    )
-                  )}
-                </Select>
-
-                {errors.organizacion && (
-                  <FormHelperText>
-                    {errors.organizacion}
-                  </FormHelperText>
-                )}
-              </FormControl>
-            </Grid>
-
+            {/* Escenario */}
             <Grid item xs={12} md={8}>
               <FormControl
                 fullWidth
                 required
-                error={Boolean(
-                  errors.escenario
-                )}
-              >
-                <InputLabel>
-                  Escenario de riesgo
-                </InputLabel>
-
+                error={Boolean(errors.escenario)}>
+                <InputLabel>Escenario de riesgo</InputLabel>
                 <Select
                   name="escenario"
                   label="Escenario de riesgo"
                   value={formData.escenario}
                   onChange={handleChange}
-                  disabled={
-                    loading ||
-                    !formData.organizacion
-                  }
-                >
+                  disabled={loading}>
                   <MenuItem value="">
-                    <em>
-                      Selecciona un escenario
-                    </em>
+                    <em>Selecciona un escenario</em>
                   </MenuItem>
-
-                  {filteredScenarios.map(
-                    (escenario) => (
-                      <MenuItem
-                        key={escenario.id}
-                        value={escenario.id}
-                      >
-                        {escenario.nombre}
-                        {escenario.nivelRiesgo
-                          ? ` — Riesgo ${escenario.nivelRiesgo}`
-                          : ""}
-                      </MenuItem>
-                    )
-                  )}
-                </Select>
-
-                {errors.escenario && (
-                  <FormHelperText>
-                    {errors.escenario}
-                  </FormHelperText>
-                )}
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>
-                  Estado
-                </InputLabel>
-
-                <Select
-                  name="estado"
-                  label="Estado"
-                  value={formData.estado}
-                  onChange={handleChange}
-                  disabled={loading}
-                >
-                  {ESTADOS.map((estado) => (
-                    <MenuItem
-                      key={estado}
-                      value={estado}
-                    >
-                      {estado}
+                  {escenarios.map((esc) => (
+                    <MenuItem key={esc.id} value={esc.id}>
+                      {esc.codigo ?? esc.nombre} — {esc.activoNombre ?? ""} / {esc.amenazaNombre ?? ""}
                     </MenuItem>
                   ))}
                 </Select>
+                {errors.escenario && (
+                  <FormHelperText>{errors.escenario}</FormHelperText>
+                )}
+                <FormHelperText>
+                  Cada escenario puede tener un único análisis FAIR (relación 1:1).
+                </FormHelperText>
               </FormControl>
             </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                minRows={3}
-                label="Descripción u observaciones"
-                name="descripcion"
-                value={formData.descripcion}
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </Grid>
-
+            {/* Riesgo simple (P × I) */}
             <Grid item xs={12}>
               <Box
                 sx={{
-                  border:
-                    "1px solid rgba(15,61,91,0.12)",
+                  border: "1px solid rgba(15,61,91,0.12)",
                   borderRadius: 2,
                   p: 3,
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  fontWeight={800}
-                >
-                  Frecuencia de eventos de pérdida
+                }}>
+                <Typography variant="h6" fontWeight={800} gutterBottom>
+                  Modelo simple R = P × I (Matriz de calor)
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Escala 1-5 para probabilidad e impacto. Resultado: 1-25.
                 </Typography>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 3 }}
-                >
-                  LEF — Número estimado de eventos
-                  de pérdida por año.
+                <Grid container spacing={4}>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" fontWeight={700} gutterBottom>
+                      Probabilidad de ocurrencia: {formData.probabilidad}
+                    </Typography>
+                    <Slider
+                      value={formData.probabilidad}
+                      onChange={handleSlider("probabilidad")}
+                      min={1}
+                      max={5}
+                      step={1}
+                      marks={SCALE_MARKS}
+                      valueLabelDisplay="auto"
+                      disabled={loading}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      1 = Muy improbable · 5 = Casi certero
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" fontWeight={700} gutterBottom>
+                      Impacto sobre el negocio: {formData.impacto}
+                    </Typography>
+                    <Slider
+                      value={formData.impacto}
+                      onChange={handleSlider("impacto")}
+                      min={1}
+                      max={5}
+                      step={1}
+                      marks={SCALE_MARKS}
+                      valueLabelDisplay="auto"
+                      disabled={loading}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      1 = Despreciable · 5 = Catastrófico
+                    </Typography>
+                  </Grid>
+                </Grid>
+
+                <Box
+                  sx={{
+                    mt: 3,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                  }}>
+                  <Typography color="text.secondary">Riesgo simple:</Typography>
+                  <Typography variant="h4" fontWeight={900}>
+                    {riesgoSimple} / 25
+                  </Typography>
+                  <Chip
+                    label={getRiesgoSimpleLabel(riesgoSimple)}
+                    color={getRiesgoSimpleColor(getRiesgoSimpleLabel(riesgoSimple))}
+                    sx={{ fontWeight: 800, fontSize: "0.9rem" }}
+                  />
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* LEF — Loss Event Frequency */}
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  border: "1px solid rgba(15,61,91,0.12)",
+                  borderRadius: 2,
+                  p: 3,
+                }}>
+                <Typography variant="h6" fontWeight={800}>
+                  LEF — Frecuencia de eventos de pérdida
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Número estimado de veces al año que ocurre el evento de pérdida.
+                  Distribución triangular/PERT (sección 5.3).
                 </Typography>
 
                 {errors.lef && (
-                  <Alert
-                    severity="error"
-                    sx={{ mb: 2 }}
-                  >
+                  <Alert severity="error" sx={{ mb: 2 }}>
                     {errors.lef}
                   </Alert>
                 )}
@@ -648,126 +356,75 @@ const AnalisisFormDialog = ({
                       fullWidth
                       type="number"
                       label="LEF mínima"
-                      name="lefMin"
-                      value={formData.lefMin}
+                      name="lef_min"
+                      value={formData.lef_min}
                       onChange={handleChange}
                       disabled={loading}
-                      inputProps={{
-                        min: 0,
-                        step: "0.01",
-                      }}
+                      inputProps={{ min: 0, step: "0.0001" }}
                       InputProps={{
                         endAdornment: (
-                          <InputAdornment position="end">
-                            eventos/año
-                          </InputAdornment>
+                          <InputAdornment position="end">eventos/año</InputAdornment>
                         ),
                       }}
                     />
                   </Grid>
-
                   <Grid item xs={12} md={4}>
                     <TextField
                       fullWidth
                       type="number"
                       label="LEF más probable"
-                      name="lefMode"
-                      value={formData.lefMode}
+                      name="lef_probable"
+                      value={formData.lef_probable}
                       onChange={handleChange}
                       disabled={loading}
-                      inputProps={{
-                        min: 0,
-                        step: "0.01",
-                      }}
+                      inputProps={{ min: 0, step: "0.0001" }}
                       InputProps={{
                         endAdornment: (
-                          <InputAdornment position="end">
-                            eventos/año
-                          </InputAdornment>
+                          <InputAdornment position="end">eventos/año</InputAdornment>
                         ),
                       }}
                     />
                   </Grid>
-
                   <Grid item xs={12} md={4}>
                     <TextField
                       fullWidth
                       type="number"
                       label="LEF máxima"
-                      name="lefMax"
-                      value={formData.lefMax}
+                      name="lef_max"
+                      value={formData.lef_max}
                       onChange={handleChange}
                       disabled={loading}
-                      inputProps={{
-                        min: 0,
-                        step: "0.01",
-                      }}
+                      inputProps={{ min: 0, step: "0.0001" }}
                       InputProps={{
                         endAdornment: (
-                          <InputAdornment position="end">
-                            eventos/año
-                          </InputAdornment>
+                          <InputAdornment position="end">eventos/año</InputAdornment>
                         ),
                       }}
                     />
                   </Grid>
                 </Grid>
-
-                <Box
-                  sx={{
-                    mt: 2,
-                    textAlign: "right",
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                  >
-                    LEF esperada
-                  </Typography>
-
-                  <Typography
-                    variant="h5"
-                    fontWeight={800}
-                    color="primary.main"
-                  >
-                    {expectedLef.toFixed(2)} eventos/año
-                  </Typography>
-                </Box>
               </Box>
             </Grid>
 
+            {/* PLM — Primary Loss Magnitude */}
             <Grid item xs={12}>
               <Box
                 sx={{
-                  border:
-                    "1px solid rgba(15,61,91,0.12)",
+                  border: "1px solid rgba(15,61,91,0.12)",
                   borderRadius: 2,
                   p: 3,
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  fontWeight={800}
-                >
-                  Magnitud de pérdida
+                }}>
+                <Typography variant="h6" fontWeight={800}>
+                  PLM — Magnitud de pérdida primaria
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Pérdida económica directa por cada evento: daño operativo,
+                  recuperación, sustitución de activos (sección 5.3).
                 </Typography>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 3 }}
-                >
-                  LM — Pérdida económica estimada
-                  por cada evento.
-                </Typography>
-
-                {errors.lm && (
-                  <Alert
-                    severity="error"
-                    sx={{ mb: 2 }}
-                  >
-                    {errors.lm}
+                {errors.plm && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {errors.plm}
                   </Alert>
                 )}
 
@@ -776,170 +433,128 @@ const AnalisisFormDialog = ({
                     <TextField
                       fullWidth
                       type="number"
-                      label="Pérdida mínima"
-                      name="lmMin"
-                      value={formData.lmMin}
+                      label="PLM mínima"
+                      name="plm_min"
+                      value={formData.plm_min}
                       onChange={handleChange}
                       disabled={loading}
-                      inputProps={{
-                        min: 0,
-                        step: "0.01",
-                      }}
+                      inputProps={{ min: 0, step: "0.01" }}
                       InputProps={{
                         startAdornment: (
-                          <InputAdornment position="start">
-                            $
-                          </InputAdornment>
+                          <InputAdornment position="start">$</InputAdornment>
                         ),
                       }}
                     />
                   </Grid>
-
                   <Grid item xs={12} md={4}>
                     <TextField
                       fullWidth
                       type="number"
-                      label="Pérdida más probable"
-                      name="lmMode"
-                      value={formData.lmMode}
+                      label="PLM más probable"
+                      name="plm_probable"
+                      value={formData.plm_probable}
                       onChange={handleChange}
                       disabled={loading}
-                      inputProps={{
-                        min: 0,
-                        step: "0.01",
-                      }}
+                      inputProps={{ min: 0, step: "0.01" }}
                       InputProps={{
                         startAdornment: (
-                          <InputAdornment position="start">
-                            $
-                          </InputAdornment>
+                          <InputAdornment position="start">$</InputAdornment>
                         ),
                       }}
                     />
                   </Grid>
-
                   <Grid item xs={12} md={4}>
                     <TextField
                       fullWidth
                       type="number"
-                      label="Pérdida máxima"
-                      name="lmMax"
-                      value={formData.lmMax}
+                      label="PLM máxima"
+                      name="plm_max"
+                      value={formData.plm_max}
                       onChange={handleChange}
                       disabled={loading}
-                      inputProps={{
-                        min: 0,
-                        step: "0.01",
-                      }}
+                      inputProps={{ min: 0, step: "0.01" }}
                       InputProps={{
                         startAdornment: (
-                          <InputAdornment position="start">
-                            $
-                          </InputAdornment>
+                          <InputAdornment position="start">$</InputAdornment>
                         ),
                       }}
                     />
                   </Grid>
                 </Grid>
-
-                <Box
-                  sx={{
-                    mt: 2,
-                    textAlign: "right",
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                  >
-                    Magnitud esperada
-                  </Typography>
-
-                  <Typography
-                    variant="h5"
-                    fontWeight={800}
-                    color="primary.main"
-                  >
-                    {formatCurrency(expectedLm)}
-                  </Typography>
-                </Box>
               </Box>
             </Grid>
 
+            {/* SLM — Secondary Loss Magnitude */}
             <Grid item xs={12}>
               <Box
                 sx={{
-                  border:
-                    "1px solid rgba(15,61,91,0.12)",
+                  border: "1px solid rgba(15,61,91,0.12)",
                   borderRadius: 2,
                   p: 3,
-                  backgroundColor:
-                    "rgba(11,95,165,0.04)",
-                }}
-              >
-                <Grid
-                  container
-                  spacing={2}
-                  alignItems="center"
-                >
-                  <Grid item xs={12} md={4}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      LEF esperada
-                    </Typography>
+                }}>
+                <Typography variant="h6" fontWeight={800}>
+                  SLM — Magnitud de pérdida secundaria
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Pérdidas indirectas: multas regulatorias, daño reputacional,
+                  litigios, pérdida de clientes. Puede ser 0 si no aplica.
+                </Typography>
 
-                    <Typography
-                      variant="h5"
-                      fontWeight={800}
-                    >
-                      {expectedLef.toFixed(2)}
-                    </Typography>
+                {errors.slm && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {errors.slm}
+                  </Alert>
+                )}
+
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="SLM mínima"
+                      name="slm_min"
+                      value={formData.slm_min}
+                      onChange={handleChange}
+                      disabled={loading}
+                      inputProps={{ min: 0, step: "0.01" }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">$</InputAdornment>
+                        ),
+                      }}
+                    />
                   </Grid>
-
                   <Grid item xs={12} md={4}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      LM esperada
-                    </Typography>
-
-                    <Typography
-                      variant="h5"
-                      fontWeight={800}
-                    >
-                      {formatCurrency(expectedLm)}
-                    </Typography>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="SLM más probable"
+                      name="slm_probable"
+                      value={formData.slm_probable}
+                      onChange={handleChange}
+                      disabled={loading}
+                      inputProps={{ min: 0, step: "0.01" }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">$</InputAdornment>
+                        ),
+                      }}
+                    />
                   </Grid>
-
                   <Grid item xs={12} md={4}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      Pérdida anual esperada
-                    </Typography>
-
-                    <Typography
-                      variant="h4"
-                      fontWeight={900}
-                      color="primary.main"
-                    >
-                      {formatCurrency(
-                        expectedAnnualLoss
-                      )}
-                    </Typography>
-
-                    <Chip
-                      label={`Riesgo ${riskLevel}`}
-                      color={getRiskColor(
-                        riskLevel
-                      )}
-                      sx={{
-                        mt: 1,
-                        fontWeight: 800,
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="SLM máxima"
+                      name="slm_max"
+                      value={formData.slm_max}
+                      onChange={handleChange}
+                      disabled={loading}
+                      inputProps={{ min: 0, step: "0.01" }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">$</InputAdornment>
+                        ),
                       }}
                     />
                   </Grid>
@@ -947,60 +562,61 @@ const AnalisisFormDialog = ({
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Iteraciones Monte Carlo"
-                name="iteraciones"
-                value={formData.iteraciones}
-                onChange={handleChange}
-                error={Boolean(
-                  errors.iteraciones
-                )}
-                helperText={
-                  errors.iteraciones ||
-                  "Valor recomendado: 10.000"
-                }
-                disabled={loading}
-                inputProps={{
-                  min: 1000,
-                  max: 1000000,
-                  step: 1000,
-                }}
-              />
+            {/* ALE estimado */}
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  border: "1px solid rgba(15,61,91,0.12)",
+                  borderRadius: 2,
+                  p: 3,
+                  backgroundColor: "rgba(11,95,165,0.04)",
+                }}>
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="body2" color="text.secondary">
+                      LEF probable
+                    </Typography>
+                    <Typography variant="h5" fontWeight={800}>
+                      {Number(formData.lef_probable || 0).toFixed(4)} eventos/año
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="body2" color="text.secondary">
+                      PLM + SLM probable
+                    </Typography>
+                    <Typography variant="h5" fontWeight={800}>
+                      {formatUSD(
+                        Number(formData.plm_probable || 0) + Number(formData.slm_probable || 0)
+                      )}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="body2" color="text.secondary">
+                      ALE estimado = LEF × (PLM + SLM)
+                    </Typography>
+                    <Typography variant="h4" fontWeight={900} color="primary.main">
+                      {formatUSD(aleEstimado)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Pérdida anual esperada (estimación puntual)
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            {/* Notas */}
+            <Grid item xs={12}>
               <TextField
                 fullWidth
-                type="number"
-                label="Nivel de confianza"
-                name="nivelConfianza"
-                value={
-                  formData.nivelConfianza
-                }
+                multiline
+                minRows={3}
+                label="Notas y supuestos"
+                name="notas"
+                value={formData.notas}
                 onChange={handleChange}
-                error={Boolean(
-                  errors.nivelConfianza
-                )}
-                helperText={
-                  errors.nivelConfianza ||
-                  "Valor recomendado: 95%"
-                }
                 disabled={loading}
-                inputProps={{
-                  min: 50,
-                  max: 99.9,
-                  step: 0.1,
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      %
-                    </InputAdornment>
-                  ),
-                }}
+                placeholder="Documenta las fuentes de los rangos, supuestos del análisis o referencias usadas."
               />
             </Grid>
           </Grid>
@@ -1008,29 +624,17 @@ const AnalisisFormDialog = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button
-          onClick={onClose}
-          disabled={loading}
-        >
+        <Button onClick={onClose} disabled={loading}>
           Cancelar
         </Button>
-
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={loading}
-        >
+          disabled={loading}>
           {loading && (
-            <CircularProgress
-              size={20}
-              color="inherit"
-              sx={{ mr: 1 }}
-            />
+            <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
           )}
-
-          {isEditing
-            ? "Guardar cambios"
-            : "Crear análisis"}
+          {isEditing ? "Guardar cambios" : "Crear análisis"}
         </Button>
       </DialogActions>
     </Dialog>

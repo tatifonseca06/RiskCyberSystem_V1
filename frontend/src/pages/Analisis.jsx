@@ -61,39 +61,20 @@ const ESTADOS = [
 ];
 
 const getRiskColor = (level = "") => {
-  const normalized = level
-    .toString()
-    .trim()
-    .toLowerCase();
+  const normalized = level.toString().trim().toUpperCase();
 
-  if (
-    normalized.includes("crít") ||
-    normalized.includes("critic")
-  ) {
+  if (normalized === "MUY_ALTO" || normalized.includes("MUY ALTO") || normalized.includes("CRÍT")) {
     return "error";
   }
-
-  if (
-    normalized === "alto" ||
-    normalized === "high"
-  ) {
+  if (normalized === "ALTO" || normalized === "HIGH") {
     return "warning";
   }
-
-  if (
-    normalized === "medio" ||
-    normalized === "medium"
-  ) {
+  if (normalized === "MEDIO" || normalized === "MEDIUM") {
     return "info";
   }
-
-  if (
-    normalized === "bajo" ||
-    normalized === "low"
-  ) {
+  if (normalized === "BAJO" || normalized === "MUY_BAJO" || normalized === "LOW") {
     return "success";
   }
-
   return "default";
 };
 
@@ -852,128 +833,79 @@ const Analisis = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>
-                        Análisis
-                      </TableCell>
-
-                      <TableCell>
-                        Organización
-                      </TableCell>
-
-                      <TableCell>
-                        Escenario
-                      </TableCell>
-
-                      <TableCell align="right">
-                        LEF esperada
-                      </TableCell>
-
-                      <TableCell align="right">
-                        LM esperada
-                      </TableCell>
-
-                      <TableCell align="right">
-                        Pérdida anual
-                      </TableCell>
-
-                      <TableCell>
-                        Riesgo
-                      </TableCell>
-
-                      <TableCell>
-                        Estado
-                      </TableCell>
-
-                      <TableCell align="right">
-                        Acciones
-                      </TableCell>
+                      <TableCell>Escenario</TableCell>
+                      <TableCell align="center">P</TableCell>
+                      <TableCell align="center">I</TableCell>
+                      <TableCell align="center">P×I</TableCell>
+                      <TableCell align="right">LEF probable</TableCell>
+                      <TableCell align="right">PLM probable</TableCell>
+                      <TableCell align="right">ALE estimado</TableCell>
+                      <TableCell>Riesgo</TableCell>
+                      <TableCell align="right">Acciones</TableCell>
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
                     {analisis.map((item) => (
-                      <TableRow
-                        key={item.id}
-                        hover
-                      >
+                      <TableRow key={item.id} hover>
                         <TableCell>
-                          <Typography
-                            variant="body2"
-                            fontWeight={700}
-                          >
-                            {item.nombre}
+                          <Typography variant="body2" fontWeight={700} fontFamily="monospace">
+                            {item.escenarioCodigo || item.escenarioNombre}
                           </Typography>
-
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                          >
-                            {item.iteraciones.toLocaleString(
-                              "es-EC"
-                            )}{" "}
-                            iteraciones
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          {
-                            item.organizacionNombre
-                          }
-                        </TableCell>
-
-                        <TableCell>
-                          {
-                            item.escenarioNombre
-                          }
-                        </TableCell>
-
-                        <TableCell align="right">
-                          {formatNumber(
-                            item.lefExpected
+                          {item.notas && (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{
+                                display: "block",
+                                maxWidth: 200,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}>
+                              {item.notas}
+                            </Typography>
                           )}
                         </TableCell>
 
-                        <TableCell align="right">
-                          {formatCurrency(
-                            item.lmExpected
-                          )}
+                        <TableCell align="center">
+                          <Typography variant="body2" fontWeight={700}>
+                            {item.probabilidad}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell align="center">
+                          <Typography variant="body2" fontWeight={700}>
+                            {item.impacto}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell align="center">
+                          <Typography variant="body2" fontWeight={800}>
+                            {item.riesgoSimple}
+                          </Typography>
                         </TableCell>
 
                         <TableCell align="right">
-                          <Typography
-                            variant="body2"
-                            fontWeight={800}
-                          >
-                            {formatCurrency(
-                              item.perdidaAnualEsperada
-                            )}
+                          {formatNumber(item.lef_probable)}
+                        </TableCell>
+
+                        <TableCell align="right">
+                          {formatCurrency(item.plm_probable)}
+                        </TableCell>
+
+                        <TableCell align="right">
+                          <Typography variant="body2" fontWeight={800}>
+                            {formatCurrency(item.aleEstimado)}
                           </Typography>
                         </TableCell>
 
                         <TableCell>
                           <Chip
                             size="small"
-                            label={
-                              item.nivelRiesgo ||
-                              "Sin clasificar"
-                            }
-                            color={getRiskColor(
-                              item.nivelRiesgo
-                            )}
-                            sx={{
-                              fontWeight: 700,
-                            }}
-                          />
-                        </TableCell>
-
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={item.estado}
-                            color={getStatusColor(
-                              item.estado
-                            )}
-                            variant="outlined"
+                            label={item.nivelRiesgoSimple || "Sin clasificar"}
+                            color={getRiskColor(item.nivelRiesgoSimple)}
+                            sx={{ fontWeight: 700 }}
                           />
                         </TableCell>
 
@@ -981,34 +913,21 @@ const Analisis = () => {
                           <Tooltip title="Ejecutar Monte Carlo">
                             <IconButton
                               color="secondary"
-                              onClick={() =>
-                                handleMonteCarlo(
-                                  item
-                                )
-                              }
-                            >
+                              onClick={() => handleMonteCarlo(item)}>
                               <PlayArrow />
                             </IconButton>
                           </Tooltip>
-
                           <Tooltip title="Editar">
                             <IconButton
                               color="primary"
-                              onClick={() =>
-                                handleEdit(item)
-                              }
-                            >
+                              onClick={() => handleEdit(item)}>
                               <Edit />
                             </IconButton>
                           </Tooltip>
-
                           <Tooltip title="Eliminar">
                             <IconButton
                               color="error"
-                              onClick={() =>
-                                handleDelete(item)
-                              }
-                            >
+                              onClick={() => handleDelete(item)}>
                               <Delete />
                             </IconButton>
                           </Tooltip>
