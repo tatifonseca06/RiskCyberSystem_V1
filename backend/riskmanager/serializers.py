@@ -32,9 +32,18 @@ class PerfilUsuarioSerializer(serializers.ModelSerializer):
 class ActivoSerializer(serializers.ModelSerializer):
     organizacion_nombre = serializers.CharField(source="organizacion.nombre", read_only=True)
 
+    criticidad = serializers.SerializerMethodField()
+    valor_activo = serializers.SerializerMethodField()
+
     class Meta:
         model = Activo
         fields = "__all__"
+
+    def get_criticidad(self, obj):
+        return obj.criticidad
+
+    def get_valor_activo(self, obj):
+        return obj.valor_activo
 
 
 class CatalogoAmenazaSerializer(serializers.ModelSerializer):

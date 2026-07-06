@@ -809,7 +809,7 @@ const Activos = () => {
 
                           <TableCell align="right">
                             {formatCurrency(
-                              activo.valor
+                              activo.valor_economico_usd
                             )}
                           </TableCell>
 

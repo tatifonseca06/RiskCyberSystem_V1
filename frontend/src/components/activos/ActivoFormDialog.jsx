@@ -147,7 +147,7 @@ const ActivoFormDialog = ({
         confidencialidad: Number(activo.confidencialidad ?? 3),
         integridad: Number(activo.integridad ?? 3),
         disponibilidad: Number(activo.disponibilidad ?? 3),
-        valor: activo.valor ?? "",
+        valor: activo.valor_economico_usd ?? "",
         estado: activo.estado ?? true,
       });
     } else {
@@ -391,46 +391,6 @@ const ActivoFormDialog = ({
                   {errors.tipo && (
                     <FormHelperText>
                       {errors.tipo}
-                    </FormHelperText>
-                  )}
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl
-                  fullWidth
-                  required
-                  error={Boolean(
-                    errors.criticidad
-                  )}
-                >
-                  <InputLabel id="criticidad-activo-label">
-                    Criticidad
-                  </InputLabel>
-
-                  <Select
-                    labelId="criticidad-activo-label"
-                    label="Criticidad"
-                    name="criticidad"
-                    value={formData.criticidad}
-                    onChange={handleChange}
-                    disabled={loading}
-                  >
-                    {NIVELES_CRITICIDAD.map(
-                      (nivel) => (
-                        <MenuItem
-                          key={nivel}
-                          value={nivel}
-                        >
-                          {nivel}
-                        </MenuItem>
-                      )
-                    )}
-                  </Select>
-
-                  {errors.criticidad && (
-                    <FormHelperText>
-                      {errors.criticidad}
                     </FormHelperText>
                   )}
                 </FormControl>
