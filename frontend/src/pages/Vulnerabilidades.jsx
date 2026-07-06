@@ -174,6 +174,9 @@ const Vulnerabilidades = () => {
 
   const [total, setTotal] = useState(0);
 
+  const [activos, setActivos] =
+  useState([]);
+
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] =
     useState(10);
@@ -248,12 +251,19 @@ const Vulnerabilidades = () => {
       setLoadingCatalogs(true);
 
       try {
-        const organizacionesData = await vulnerabilidadesService.getOrganizaciones();
+        const [
+          organizacionesData,
+          activosData,
+        ] = await Promise.all([
+          vulnerabilidadesService.getOrganizaciones(),
+          vulnerabilidadesService.getActivos(),
+        ]);
         setOrganizaciones(organizacionesData);
+        setActivos(activosData);
       } catch (requestError) {
         setError(
           requestError.message ||
-            "No fue posible cargar los catálogos."
+          "No fue posible cargar los catálogos."
         );
       } finally {
         setLoadingCatalogs(false);
@@ -313,11 +323,13 @@ const Vulnerabilidades = () => {
   }, [loadVulnerabilidades]);
 
   const filteredAssets = useMemo(() => {
+    const activosList = activos || [];
+
     if (!organizacionFilter) {
-      return activos;
+      return activosList;
     }
 
-    return activos.filter((activo) => {
+    return activosList.filter((activo) => {
       if (!activo.organizacionId) {
         return true;
       }

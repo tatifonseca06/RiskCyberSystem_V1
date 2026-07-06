@@ -34,10 +34,10 @@ const INITIAL_FORM = {
   descripcion: "",
   organizacion: "",
   analisis: "",
-  estrategia: "Mitigar",
+  estrategia: "MITIGAR",
   responsable: "",
   prioridad: "Media",
-  estado: "Planificado",
+  estado: "PLANIFICADO",
   porcentajeAvance: 0,
   presupuesto: "",
   costoReal: "",
@@ -51,10 +51,22 @@ const INITIAL_FORM = {
 };
 
 const ESTRATEGIAS = [
-  "Mitigar",
-  "Aceptar",
-  "Transferir",
-  "Evitar",
+  {
+    value: "MITIGAR",
+    label: "Mitigar",
+  },
+  {
+    value: "ACEPTAR",
+    label: "Aceptar",
+  },
+  {
+    value: "TRANSFERIR",
+    label: "Transferir",
+  },
+  {
+    value: "EVITAR",
+    label: "Evitar",
+  },
 ];
 
 const PRIORIDADES = [
@@ -65,11 +77,22 @@ const PRIORIDADES = [
 ];
 
 const ESTADOS = [
-  "Planificado",
-  "En ejecución",
-  "Pausado",
-  "Completado",
-  "Cancelado",
+  {
+    value: "PLANIFICADO",
+    label: "Planificado",
+  },
+  {
+    value: "EN_PROGRESO",
+    label: "En progreso",
+  },
+  {
+    value: "COMPLETADO",
+    label: "Completado",
+  },
+  {
+    value: "CANCELADO",
+    label: "Cancelado",
+  },
 ];
 
 const getStrategyDescription = (strategy) => {
@@ -176,7 +199,7 @@ const TratamientoFormDialog = ({
 
         estado:
           tratamiento.estado ??
-          "Planificado",
+          "PLANIFICADO",
 
         porcentajeAvance:
           Number(
@@ -436,9 +459,7 @@ const TratamientoFormDialog = ({
 
     const payload = {
       nombre: formData.nombre.trim(),
-      descripcion:
-        formData.descripcion.trim(),
-
+      descripcion_plan: formData.descripcion.trim(),
       organizacion: Number(
         formData.organizacion
       ),
@@ -663,16 +684,14 @@ const TratamientoFormDialog = ({
                   onChange={handleChange}
                   disabled={loading}
                 >
-                  {ESTRATEGIAS.map(
-                    (estrategia) => (
-                      <MenuItem
-                        key={estrategia}
-                        value={estrategia}
-                      >
-                        {estrategia}
-                      </MenuItem>
-                    )
-                  )}
+                  {ESTRATEGIAS.map((estrategia) => (
+  <MenuItem 
+    key={estrategia.value}
+    value={estrategia.value}
+  >
+    {estrategia.label}
+  </MenuItem>
+))}
                 </Select>
               </FormControl>
             </Grid>

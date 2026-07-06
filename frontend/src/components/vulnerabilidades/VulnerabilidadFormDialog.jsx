@@ -173,7 +173,7 @@ const VulnerabilidadFormDialog = ({
                     <MenuItem value="">
                       <em>Selecciona una organización</em>
                     </MenuItem>
-                    {organizaciones.map((org) => (
+                    {(organizaciones || []).map((org) => (
                       <MenuItem key={org.id} value={org.id}>
                         {org.nombre}
                       </MenuItem>

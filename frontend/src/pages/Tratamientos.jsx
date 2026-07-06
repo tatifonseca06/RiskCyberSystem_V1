@@ -59,11 +59,26 @@ const PRIORIDADES = [
 ];
 
 const ESTADOS = [
-  "Planificado",
-  "En ejecución",
-  "Pausado",
-  "Completado",
-  "Cancelado",
+  {
+    value: "PLANIFICADO",
+    label: "Planificado",
+  },
+  {
+    value: "EN_PROGRESO",
+    label: "En progreso",
+  },
+  {
+    value: "PAUSADO",
+    label: "Pausado",
+  },
+  {
+    value: "COMPLETADO",
+    label: "Completado",
+  },
+  {
+    value: "CANCELADO",
+    label: "Cancelado",
+  },
 ];
 
 const getStrategyColor = (strategy = "") => {
