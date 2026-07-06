@@ -27,6 +27,35 @@ import {
   useState,
 } from "react";
 
+const normalizeTipo = (tipo) => {
+  const map = {
+    HW: "HW",
+    SW: "SW",
+    INF: "INF",
+    RED: "RED",
+    SRV: "SRV",
+    PER: "PER",
+    DOC: "DOC",
+    REP: "REP",
+    TER: "TER",
+    OTRO: "OTRO",
+
+    Hardware: "HW",
+    Software: "SW",
+    Información: "INF",
+    "Base de datos": "DOC",
+    Red: "RED",
+    Servicio: "SRV",
+    Proceso: "PROC",
+    Persona: "PER",
+    Instalación: "INST",
+    Proveedor: "TER",
+    Otro: "OTRO",
+  };
+
+  return map[tipo?.trim()] || tipo?.trim() || "";
+};
+
 const INITIAL_FORM = {
   nombre: "",
   descripcion: "",
@@ -43,17 +72,16 @@ const INITIAL_FORM = {
 };
 
 const TIPOS_ACTIVO = [
-  "Hardware",
-  "Software",
-  "Información",
-  "Base de datos",
-  "Red",
-  "Servicio",
-  "Proceso",
-  "Persona",
-  "Instalación",
-  "Proveedor",
-  "Otro",
+  { label: "Hardware", value: "HW" },
+  { label: "Software", value: "SW" },
+  { label: "Información", value: "INF" },
+  { label: "Red", value: "RED" },
+  { label: "Servicio", value: "SRV" },
+  { label: "Proceso", value: "PROC" },
+  { label: "Persona", value: "PER" },
+  { label: "Instalación", value: "INST" },
+  { label: "Proveedor", value: "TER" },
+  { label: "Otro", value: "OTRO" },
 ];
 
 const NIVELES_CRITICIDAD = [
@@ -104,85 +132,27 @@ const ActivoFormDialog = ({
   const isEditing = Boolean(activo?.id);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
-
+    if (!open) return;
     if (activo) {
       setFormData({
-        nombre:
-          activo.nombre ??
-          activo.nombre_activo ??
-          "",
-
-        descripcion:
-          activo.descripcion ??
-          "",
-
-        tipo:
-          activo.tipo ??
-          activo.tipo_activo ??
-          "",
-
-        propietario:
-          activo.propietario ??
-          activo.responsable ??
-          "",
-
-        ubicacion:
-          activo.ubicacion ??
-          "",
-
-        organizacion:
-          activo.organizacionId ??
-          activo.organizacion_id ??
-          (
-            typeof activo.organizacion === "object"
-              ? activo.organizacion?.id
-              : activo.organizacion
-          ) ??
-          "",
-
-        criticidad:
-          activo.criticidad ??
-          activo.nivel_criticidad ??
-          "Media",
-
-        confidencialidad:
-          Number(
-            activo.confidencialidad ??
-            activo.valor_confidencialidad ??
-            3
-          ),
-
-        integridad:
-          Number(
-            activo.integridad ??
-            activo.valor_integridad ??
-            3
-          ),
-
-        disponibilidad:
-          Number(
-            activo.disponibilidad ??
-            activo.valor_disponibilidad ??
-            3
-          ),
-
-        valor:
-          activo.valor ??
-          activo.valor_economico ??
-          "",
-
-        estado:
-          activo.estado ??
-          activo.activo ??
-          true,
+        nombre: activo.nombre ?? activo.nombre_activo ?? "",
+        descripcion: activo.descripcion ?? "",
+        tipo: normalizeTipo(
+          (activo?.tipo ?? activo?.tipo_activo ?? "").trim()
+        ),
+        propietario: activo.propietario ?? activo.responsable ?? "",
+        ubicacion: activo.ubicacion ?? "",
+        organizacion:activo.organizacionId ?? activo.organizacion_id ?? (typeof activo.organizacion === "object" ? activo.organizacion?.id : activo.organizacion) ?? "",
+        criticidad: activo.criticidad ?? "Media",
+        confidencialidad: Number(activo.confidencialidad ?? 3),
+        integridad: Number(activo.integridad ?? 3),
+        disponibilidad: Number(activo.disponibilidad ?? 3),
+        valor: activo.valor ?? "",
+        estado: activo.estado ?? true,
       });
     } else {
       setFormData(INITIAL_FORM);
     }
-
     setErrors({});
     setSubmitError("");
   }, [open, activo]);
@@ -276,30 +246,20 @@ const ActivoFormDialog = ({
     }
 
     const payload = {
-      nombre: formData.nombre.trim(),
-      descripcion:
-        formData.descripcion.trim(),
-      tipo: formData.tipo,
-      propietario:
-        formData.propietario.trim(),
-      ubicacion:
-        formData.ubicacion.trim(),
-      organizacion:
-        Number(formData.organizacion),
-      criticidad:
-        formData.criticidad,
-      confidencialidad:
-        Number(formData.confidencialidad),
-      integridad:
-        Number(formData.integridad),
-      disponibilidad:
-        Number(formData.disponibilidad),
-      valor:
-        formData.valor === ""
-          ? 0
-          : Number(formData.valor),
-      estado:
-        Boolean(formData.estado),
+      codigo: formData.nombre
+      .toUpperCase()
+      .replace(/\s/g, "_")
+      .slice(0, 20),
+      organizacion: Number(formData.organizacion),
+      nombre: formData.nombre,
+      tipo: formData.tipo, // HW, SW, INF
+      confidencialidad: Number(formData.confidencialidad),
+      integridad: Number(formData.integridad),
+      disponibilidad: Number(formData.disponibilidad),
+      valor_economico_usd: Number(formData.valor || 0),
+      descripcion: formData.descripcion || "",
+      ubicacion: formData.ubicacion || "",
+      propietario: formData.propietario || "",
     };
 
     try {
@@ -408,25 +368,22 @@ const ActivoFormDialog = ({
                   </InputLabel>
 
                   <Select
-                    labelId="tipo-activo-label"
-                    label="Tipo de activo"
-                    name="tipo"
-                    value={formData.tipo}
-                    onChange={handleChange}
-                    disabled={loading}
+                  labelId="tipo-activo-label"
+                  label="Tipo de activo"
+                  name="tipo"
+                  value={formData.tipo || ""}
+                  onChange={handleChange}
+                  disabled={loading}
                   >
                     <MenuItem value="">
-                      <em>
-                        Selecciona un tipo
-                      </em>
+                    <em>Selecciona un tipo</em>
                     </MenuItem>
-
                     {TIPOS_ACTIVO.map((tipo) => (
                       <MenuItem
-                        key={tipo}
-                        value={tipo}
+                      key={tipo.value}
+                      value={tipo.value}
                       >
-                        {tipo}
+                        {tipo.label}
                       </MenuItem>
                     ))}
                   </Select>
@@ -582,7 +539,7 @@ const ActivoFormDialog = ({
                     sx={{ mb: 3 }}
                   >
                     Evalúa cada dimensión en una
-                    escala del 1 al 5.
+                    escala del 1 al 3.
                   </Typography>
 
                   <Grid container spacing={4}>
@@ -602,7 +559,7 @@ const ActivoFormDialog = ({
                           "confidencialidad"
                         )}
                         min={1}
-                        max={5}
+                        max={3}
                         step={1}
                         marks={CIA_MARKS}
                         valueLabelDisplay="auto"
@@ -624,7 +581,7 @@ const ActivoFormDialog = ({
                           "integridad"
                         )}
                         min={1}
-                        max={5}
+                        max={3}
                         step={1}
                         marks={CIA_MARKS}
                         valueLabelDisplay="auto"
@@ -648,7 +605,7 @@ const ActivoFormDialog = ({
                           "disponibilidad"
                         )}
                         min={1}
-                        max={5}
+                        max={3}
                         step={1}
                         marks={CIA_MARKS}
                         valueLabelDisplay="auto"
@@ -677,7 +634,7 @@ const ActivoFormDialog = ({
                       fontWeight={800}
                       color="primary.main"
                     >
-                      {ciaAverage} / 5
+                      {ciaAverage} / 3
                     </Typography>
                   </Box>
                 </Box>

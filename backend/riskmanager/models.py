@@ -158,9 +158,9 @@ class Activo(models.Model):
     dependencias = models.TextField(blank=True, help_text="Otros activos de los que depende")
 
     # Valoración CIA (sección 4.1)
-    confidencialidad = models.IntegerField(choices=ESCALA_CID, validators=[MinValueValidator(1), MaxValueValidator(3)])
-    integridad = models.IntegerField(choices=ESCALA_CID, validators=[MinValueValidator(1), MaxValueValidator(3)])
-    disponibilidad = models.IntegerField(choices=ESCALA_CID, validators=[MinValueValidator(1), MaxValueValidator(3)])
+    confidencialidad = models.IntegerField(choices=ESCALA_CID, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    integridad = models.IntegerField(choices=ESCALA_CID, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    disponibilidad = models.IntegerField(choices=ESCALA_CID, validators=[MinValueValidator(1), MaxValueValidator(5)])
 
     # Valor económico del activo (necesario para estimar PLM en escenarios)
     valor_economico_usd = models.DecimalField(max_digits=14, decimal_places=2, default=0)

@@ -43,18 +43,36 @@ import { activosService } from "../api/activosService";
 import ActivoFormDialog from "../components/activos/ActivoFormDialog";
 import DeleteActivoDialog from "../components/activos/DeleteActivoDialog";
 
+export const normalizeTipo = (tipo) => {
+  const map = {
+    Hardware: "HW",
+    "Hardware e infraestructura": "HW",
+    Software: "SW",
+    Información: "INF",
+    "Base de datos": "DOC",
+    Red: "RED",
+    Servicio: "SRV",
+    Proceso: "PROC",
+    Persona: "PER",
+    Instalación: "IDN",
+    Proveedor: "TER",
+    Otro: "OTRO",
+  };
+
+  return map[tipo] || tipo || "";
+};
+
 const TIPOS_ACTIVO = [
-  "Hardware",
-  "Software",
-  "Información",
-  "Base de datos",
-  "Red",
-  "Servicio",
-  "Proceso",
-  "Persona",
-  "Instalación",
-  "Proveedor",
-  "Otro",
+  { label: "Hardware", value: "HW" },
+  { label: "Software", value: "SW" },
+  { label: "Información", value: "INF" },
+  { label: "Red", value: "RED" },
+  { label: "Servicio", value: "SRV" },
+  { label: "Proceso", value: "PROC" },
+  { label: "Persona", value: "PER" },
+  { label: "Instalación", value: "INST" },
+  { label: "Proveedor", value: "TER" },
+  { label: "Otro", value: "OTRO" },
 ];
 
 const NIVELES_CRITICIDAD = [
@@ -544,13 +562,10 @@ const Activos = () => {
                   </MenuItem>
 
                   {TIPOS_ACTIVO.map((tipo) => (
-                    <MenuItem
-                      key={tipo}
-                      value={tipo}
-                    >
-                      {tipo}
-                    </MenuItem>
-                  ))}
+                    <MenuItem key={tipo.value} value={tipo.value}>
+                      {tipo.label}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -776,7 +791,7 @@ const Activos = () => {
                             >
                               <Chip
                                 size="small"
-                                label={`${ciaAverage}/5`}
+                                label={`${ciaAverage}/3`}
                                 color={
                                   Number(
                                     ciaAverage
