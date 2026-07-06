@@ -4,6 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .services.dashboard import DashboardService
 
+from rest_framework.filters import SearchFilter, OrderingFilter
+
 from .services.montecarlo import MonteCarloEngine
 
 from .models import (
@@ -54,6 +56,20 @@ class OrganizacionViewSet(viewsets.ModelViewSet):
     queryset = Organizacion.objects.all()
     serializer_class = OrganizacionSerializer
     permission_classes = [IsAuthenticated]
+
+    # 🔥 ESTO ACTIVA EL BUSCADOR
+    filter_backends = [SearchFilter, OrderingFilter]
+
+    search_fields = [
+        "nombre",
+        "identificacion",
+        "sector",
+        "email",
+        "telefono",
+        "direccion",
+    ]
+
+    ordering_fields = ["nombre", "sector", "fecha_creacion"]
 
 
 class PerfilUsuarioViewSet(viewsets.ModelViewSet):

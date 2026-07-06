@@ -34,16 +34,16 @@ const INITIAL_FORM = {
 };
 
 const SECTORES = [
-  "Financiero",
-  "Bancario",
-  "Tecnología",
-  "Salud",
-  "Educación",
-  "Gobierno",
-  "Comercio",
-  "Industrial",
-  "Servicios",
-  "Otro",
+  { label: "Financiero", value: "FINANCIERO" },
+  { label: "Bancario", value: "BANCARIO" },
+  { label: "Tecnología", value: "TECNOLOGIA" },
+  { label: "Salud", value: "SALUD" },
+  { label: "Educación", value: "EDUCACION" },
+  { label: "Gobierno", value: "GOBIERNO" },
+  { label: "Comercio", value: "COMERCIO" },
+  { label: "Industrial", value: "INDUSTRIAL" },
+  { label: "Servicios", value: "SERVICIOS" },
+  { label: "Otro", value: "OTRO" },
 ];
 
 const OrganizacionFormDialog = ({
@@ -150,32 +150,27 @@ const OrganizacionFormDialog = ({
   };
 
   const handleSubmit = async () => {
-    if (!validate()) {
-      return;
-    }
+  if (!validate()) return;
 
-    const payload = {
-      nombre: formData.nombre.trim(),
-      identificacion:
-        formData.identificacion.trim(),
-      sector: formData.sector,
-      email: formData.email.trim(),
-      telefono: formData.telefono.trim(),
-      direccion: formData.direccion.trim(),
-      descripcion:
-        formData.descripcion.trim(),
-      estado: formData.estado,
-    };
-
-    try {
-      await onSubmit(payload);
-    } catch (error) {
-      setSubmitError(
-        error.message ||
-          "No fue posible guardar la organización."
-      );
-    }
+  const payload = {
+    nombre: formData.nombre.trim(),
+    identificacion: formData.identificacion.trim() || null,
+    sector: formData.sector,
+    email: formData.email.trim() || null,
+    telefono: formData.telefono.trim() || null,
+    direccion: formData.direccion.trim() || null,
+    descripcion: formData.descripcion.trim() || "",
+    estado: formData.estado,
   };
+
+  try {
+    await onSubmit(payload, organizacion?.id);
+  } catch (error) {
+    setSubmitError(
+      error.message || "No fue posible guardar la organización."
+    );
+  }
+};
 
   return (
     <Dialog
@@ -236,26 +231,23 @@ const OrganizacionFormDialog = ({
                   </InputLabel>
 
                   <Select
-                    labelId="sector-label"
-                    label="Sector"
-                    name="sector"
-                    value={formData.sector}
-                    onChange={handleChange}
-                    disabled={loading}
-                  >
-                    <MenuItem value="">
-                      <em>Sin especificar</em>
-                    </MenuItem>
+  labelId="sector-label"
+  label="Sector"
+  name="sector"
+  value={formData.sector}
+  onChange={handleChange}
+  disabled={loading}
+>
+  <MenuItem value="">
+    <em>Sin especificar</em>
+  </MenuItem>
 
-                    {SECTORES.map((sector) => (
-                      <MenuItem
-                        key={sector}
-                        value={sector}
-                      >
-                        {sector}
-                      </MenuItem>
-                    ))}
-                  </Select>
+  {SECTORES.map((s) => (
+    <MenuItem key={s.value} value={s.value}>
+      {s.label}
+    </MenuItem>
+  ))}
+</Select>
                 </FormControl>
               </Grid>
 

@@ -66,7 +66,7 @@ WSGI_APPLICATION = 'riskcyber_api.wsgi.application'
 # USE_SQLITE=True en .env -> usa SQLite (pruebas rápidas / sin SQL Server)
 # USE_SQLITE=False (o ausente) -> usa SQL Server (producción / entrega)
 # ----------------------------------------------------------------------
-USE_SQLITE = config('USE_SQLITE', default=False, cast=bool)
+USE_SQLITE = config('USE_SQLITE', default=True, cast=bool)
 
 if USE_SQLITE:
     DATABASES = {

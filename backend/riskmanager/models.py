@@ -29,26 +29,36 @@ class Organizacion(models.Model):
     """
 
     SECTOR_CHOICES = [
-        ('PYME', 'Pequeña y Mediana Empresa'),
-        ('SALUD', 'Hospital / Clínica / Sector Salud'),
-        ('EDUCACION', 'Universidad / Institución Educativa'),
-        ('INDUSTRIAL', 'Planta Industrial / Manufactura'),
-        ('FINANCIERO', 'Entidad Financiera / Cooperativa'),
-        ('GOBIERNO', 'Organismo Gubernamental / Municipio'),
-        ('TECNOLOGIA', 'Empresa de Tecnología / Startup'),
+        ('PYME', 'PYME'),
+        ('SALUD', 'Salud'),
+        ('EDUCACION', 'Educación'),
+        ('INDUSTRIAL', 'Industrial'),
+        ('FINANCIERO', 'Financiero'),
+        ('BANCARIO', 'Bancario'),
+        ('COMERCIO', 'Comercio'),
+        ('SERVICIOS', 'Servicios'),
+        ('GOBIERNO', 'Gobierno'),
+        ('TECNOLOGIA', 'Tecnología'),
         ('OTRO', 'Otro'),
     ]
+    
+    
 
     APETITO_CHOICES = [
         ('AVERSO', 'Averso al riesgo (umbrales bajos)'),
         ('MODERADO', 'Moderado'),
         ('TOLERANTE', 'Tolerante al riesgo (umbrales altos)'),
+        ('NEUTRO', 'Neutro')
     ]
 
     nombre = models.CharField(max_length=200)
     sector = models.CharField(max_length=20, choices=SECTOR_CHOICES, default='OTRO')
     descripcion = models.TextField(blank=True, help_text="Procesos de negocio críticos, contexto general")
     apetito_riesgo = models.CharField(max_length=20, choices=APETITO_CHOICES, default='MODERADO')
+    email = models.EmailField(null=True, blank=True)
+    telefono = models.CharField(max_length=20, null=True, blank=True)
+    direccion = models.TextField(null=True, blank=True)
+    identificacion = models.CharField(max_length=50, null=True, blank=True)
 
     normativas_aplicables = models.CharField(
         max_length=300, blank=True,
