@@ -130,165 +130,63 @@ const normalizeDistribution = (result) => {
   return [];
 };
 
+// Backend model ResultadoMontecarlo returns:
+//   analisis (int FK), n_iteraciones, distribucion (str),
+//   ale_media, ale_percentil_95, ale_minimo, ale_maximo,
+//   desviacion_estandar, varianza, fecha_ejecucion, escenario_codigo
 const normalizeMonteCarlo = (result) => {
-  const analisis = result?.analisis;
-  const organizacion =
-    result?.organizacion ??
-    analisis?.organizacion;
-
-  const p50 = numericValue(
-    result?.p50,
-    result?.percentil_50,
-    result?.percentile_50,
-    result?.mediana
-  );
-
-  const p90 = numericValue(
-    result?.p90,
-    result?.percentil_90,
-    result?.percentile_90
-  );
-
-  const p95 = numericValue(
-    result?.p95,
-    result?.percentil_95,
-    result?.percentile_95,
-    result?.var_95
-  );
-
-  const p99 = numericValue(
-    result?.p99,
-    result?.percentil_99,
-    result?.percentile_99
-  );
+  const aleMedia = numericValue(result?.ale_media);
+  const p95 = numericValue(result?.ale_percentil_95);
 
   return {
     ...result,
 
-    id:
-      result?.id ??
-      result?.montecarlo_id ??
-      result?.resultado_id ??
-      result?.pk ??
-      null,
+    id: result?.id ?? result?.pk ?? null,
 
-    analisisId:
-      getObjectId(analisis) ??
-      result?.analisis_id ??
-      null,
+    analisisId: result?.analisis ?? null,
 
     analisisNombre:
-      getObjectName(
-        analisis,
-        ["nombre", "nombre_analisis", "titulo"],
-        result?.analisis_nombre ??
-          result?.nombre_analisis ??
-          "Análisis FAIR"
-      ),
+      result?.escenario_codigo ??
+      `Análisis #${result?.analisis ?? ""}`,
 
-    organizacionId:
-      getObjectId(organizacion) ??
-      result?.organizacion_id ??
-      analisis?.organizacion_id ??
-      null,
+    organizacionNombre: "—",
 
-    organizacionNombre:
-      getObjectName(
-        organizacion,
-        ["nombre", "nombre_organizacion"],
-        result?.organizacion_nombre ??
-          result?.nombre_organizacion ??
-          "Sin organización"
-      ),
+    iteraciones: numericValue(result?.n_iteraciones),
 
-    iteraciones: numericValue(
-      result?.iteraciones,
-      result?.numero_iteraciones,
-      result?.iterations
-    ),
+    nivelConfianza: 95,
 
-    nivelConfianza: numericValue(
-      result?.nivel_confianza,
-      result?.confianza,
-      result?.confidence_level,
-      95
-    ),
+    perdidaMedia: aleMedia,
 
-    perdidaMedia: numericValue(
-      result?.perdida_media,
-      result?.media,
-      result?.mean_loss,
-      result?.promedio
-    ),
+    mediana: aleMedia,
 
-    mediana: numericValue(
-      result?.mediana,
-      result?.median,
-      p50
-    ),
+    desviacionEstandar: numericValue(result?.desviacion_estandar),
 
-    desviacionEstandar: numericValue(
-      result?.desviacion_estandar,
-      result?.standard_deviation,
-      result?.std_dev
-    ),
+    varianza: numericValue(result?.varianza),
 
-    perdidaMinima: numericValue(
-      result?.perdida_minima,
-      result?.minimo,
-      result?.minimum_loss
-    ),
+    perdidaMinima: numericValue(result?.ale_minimo),
 
-    perdidaMaxima: numericValue(
-      result?.perdida_maxima,
-      result?.maximo,
-      result?.maximum_loss
-    ),
+    perdidaMaxima: numericValue(result?.ale_maximo),
 
-    p50,
-    p90,
+    p50: aleMedia,
+    p90: 0,
     p95,
-    p99,
+    p99: 0,
 
-    var: numericValue(
-      result?.var,
-      result?.value_at_risk,
-      result?.var_95,
-      p95
-    ),
+    var: p95,
 
-    nivelRiesgo:
-      result?.nivel_riesgo ??
-      result?.clasificacion_riesgo ??
-      result?.risk_level ??
-      "",
+    nivelRiesgo: result?.nivel_riesgo ?? "",
 
-    distribucion: normalizeDistribution(result),
+    distribucion: [],
 
-    fechaEjecucion:
-      result?.fecha_ejecucion ??
-      result?.fecha_creacion ??
-      result?.created_at ??
-      result?.executed_at ??
-      null,
+    fechaEjecucion: result?.fecha_ejecucion ?? null,
   };
 };
 
+// Backend AnalisisRiesgo has no 'nombre' field; use escenario_codigo
 const normalizeAnalisis = (analisis) => ({
-  id:
-    analisis?.id ??
-    analisis?.analisis_id ??
-    analisis?.pk,
-
-  nombre:
-    analisis?.nombre ??
-    analisis?.nombre_analisis ??
-    "Análisis FAIR",
-
-  organizacionId:
-    getObjectId(analisis?.organizacion) ??
-    analisis?.organizacion_id ??
-    null,
+  id: analisis?.id ?? analisis?.pk ?? null,
+  nombre: analisis?.escenario_codigo ?? `Análisis #${analisis?.id ?? ""}`,
+  organizacionId: null,
 });
 
 const normalizeOrganizacion = (organizacion) => ({
