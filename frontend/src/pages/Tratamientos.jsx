@@ -59,26 +59,10 @@ const PRIORIDADES = [
 ];
 
 const ESTADOS = [
-  {
-    value: "PLANIFICADO",
-    label: "Planificado",
-  },
-  {
-    value: "EN_PROGRESO",
-    label: "En progreso",
-  },
-  {
-    value: "PAUSADO",
-    label: "Pausado",
-  },
-  {
-    value: "COMPLETADO",
-    label: "Completado",
-  },
-  {
-    value: "CANCELADO",
-    label: "Cancelado",
-  },
+  { value: "PENDIENTE", label: "Pendiente" },
+  { value: "EN_PROCESO", label: "En proceso" },
+  { value: "IMPLEMENTADO", label: "Implementado" },
+  { value: "VENCIDO", label: "Vencido" },
 ];
 
 const getStrategyColor = (strategy = "") => {
@@ -133,25 +117,12 @@ const getPriorityColor = (priority = "") => {
 };
 
 const getStatusColor = (status = "") => {
-  const normalized = status
-    .toString()
-    .toLowerCase();
+  const normalized = status.toString().toUpperCase();
 
-  if (normalized.includes("completado")) {
-    return "success";
-  }
-
-  if (normalized.includes("ejecución")) {
-    return "primary";
-  }
-
-  if (normalized.includes("pausado")) {
-    return "warning";
-  }
-
-  if (normalized.includes("cancelado")) {
-    return "error";
-  }
+  if (normalized === "IMPLEMENTADO") return "success";
+  if (normalized === "EN_PROCESO") return "primary";
+  if (normalized === "PENDIENTE") return "warning";
+  if (normalized === "VENCIDO") return "error";
 
   return "default";
 };
@@ -187,8 +158,8 @@ const formatDate = (value) => {
 const isOverdue = (treatment) => {
   if (
     !treatment.fechaLimite ||
-    treatment.estado === "Completado" ||
-    treatment.estado === "Cancelado"
+    treatment.estado === "IMPLEMENTADO" ||
+    treatment.estado === "VENCIDO"
   ) {
     return false;
   }
@@ -826,10 +797,10 @@ const Tratamientos = () => {
 
                   {ESTADOS.map((estado) => (
                     <MenuItem
-                      key={estado}
-                      value={estado}
+                      key={estado.value}
+                      value={estado.value}
                     >
-                      {estado}
+                      {estado.label}
                     </MenuItem>
                   ))}
                 </Select>
