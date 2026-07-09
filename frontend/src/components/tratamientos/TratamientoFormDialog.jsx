@@ -397,10 +397,10 @@ const TratamientoFormDialog = ({
                 >
                   {ESTADOS.map((estado) => (
                     <MenuItem
-                      key={estado}
-                      value={estado}
+                      key={estado.value}
+                      value={estado.value}
                     >
-                      {estado}
+                      {estado.label}
                     </MenuItem>
                   ))}
                 </Select>
