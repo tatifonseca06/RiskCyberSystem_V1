@@ -485,9 +485,7 @@ const TratamientoFormDialog = ({
                 value={formData.fechaInicio}
                 onChange={handleChange}
                 disabled={loading}
-                InputLabelProps={{
-                  shrink: true,
-                }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Grid>
 
@@ -506,9 +504,7 @@ const TratamientoFormDialog = ({
                   errors.fechaLimite
                 }
                 disabled={loading}
-                InputLabelProps={{
-                  shrink: true,
-                }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Grid>
 
@@ -521,7 +517,7 @@ const TratamientoFormDialog = ({
                 value={formData.fechaImplementacion}
                 onChange={handleChange}
                 disabled={loading}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Grid>
 
